@@ -13,7 +13,7 @@ import {
   FiPlus,
   FiList,
   FiCloud,
-  FiFlame,
+  FiDatabase,
   FiBell,
   FiDollarSign,
   FiHelpCircle,
@@ -136,7 +136,7 @@ export const MENU_ITEMS = [
       {
         label: 'Firebase',
         path: '/dashboard/settings/firebase',
-        icon: FiFlame
+        icon: FiDatabase
       }
     ]
   }
