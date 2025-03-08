@@ -8,8 +8,8 @@ export default function AuthLayout({ children }) {
       {/* Background image */}
       <div className='absolute inset-0'>
         <Image 
-          src="/images/vegetables-hero.jpg" 
-          alt="vegetables" 
+          src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=2030&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+          alt="Medical supplies and medicines" 
           fill
           className='object-cover'
           priority
@@ -18,13 +18,13 @@ export default function AuthLayout({ children }) {
 
       {/* Left side - Image with overlay */}
       <div className='relative w-full md:w-1/2 min-h-screen'>
-        <div className='absolute inset-0 bg-black/60' />
+        <div className='absolute inset-0 bg-blue-900/70' />
         <div className='relative z-10 flex flex-col items-center justify-center h-full p-8'>
           <h1 className='text-white text-4xl font-bold text-center mb-4'>
-            Welcome to  DavaDukaan
+            Welcome to DavaDukaan
           </h1>
           <p className='text-white/90 text-lg text-center'>
-            Login or Register to continue
+            Your trusted medical store for quality medicines
           </p>
         </div>
       </div>
