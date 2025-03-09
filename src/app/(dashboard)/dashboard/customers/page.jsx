@@ -11,147 +11,6 @@ import {
   FiCalendar, FiChevronDown, FiChevronUp, FiX, FiPlus,
   FiUser, FiMail, FiPhone, FiMapPin, FiShoppingBag, FiCheckCircle, FiXCircle
 } from 'react-icons/fi';
-//import { toast } from 'react-toast';
-
-// // Sample customers data for demonstration
-// const sampleCustomers = [
-//   {
-//     id: '1',
-//     name: 'Rahul Sharma',
-//     email: 'rahul.s@example.com',
-//     phone: '+91 98765 43210',
-//     dateJoined: '2023-01-15T10:30:00',
-//     totalOrders: 12,
-//     totalSpent: 15250.00,
-//     address: {
-//       street: '123 Main Street, Apartment 4B',
-//       city: 'Mumbai',
-//       state: 'Maharashtra',
-//       pincode: '400001'
-//     },
-//     status: 'active',
-//     type: 'licensee'
-//   },
-//   {
-//     id: '2',
-//     name: 'Priya Patel',
-//     email: 'priya.p@example.com',
-//     phone: '+91 87654 32109',
-//     dateJoined: '2023-02-20T14:45:00',
-//     totalOrders: 8,
-//     totalSpent: 9875.50,
-//     address: {
-//       street: '456 Park Avenue',
-//       city: 'Bangalore',
-//       state: 'Karnataka',
-//       pincode: '560001'
-//     },
-//     status: 'active',
-//     type: 'unlicensed'
-//   },
-//   {
-//     id: '3',
-//     name: 'Amit Kumar',
-//     email: 'amit.k@example.com',
-//     phone: '+91 76543 21098',
-//     dateJoined: '2023-03-10T09:15:00',
-//     totalOrders: 15,
-//     totalSpent: 22340.00,
-//     address: {
-//       street: '789 Lake View Road',
-//       city: 'Delhi',
-//       state: 'Delhi',
-//       pincode: '110001'
-//     },
-//     status: 'active',
-//     type: 'licensee'
-//   },
-//   {
-//     id: '4',
-//     name: 'Sneha Reddy',
-//     email: 'sneha.r@example.com',
-//     phone: '+91 65432 10987',
-//     dateJoined: '2023-02-05T16:20:00',
-//     totalOrders: 5,
-//     totalSpent: 6560.75,
-//     address: {
-//       street: '101 Hill Road',
-//       city: 'Hyderabad',
-//       state: 'Telangana',
-//       pincode: '500001'
-//     },
-//     status: 'inactive',
-//     type: 'unlicensed'
-//   },
-//   {
-//     id: '5',
-//     name: 'Vikram Singh',
-//     email: 'vikram.s@example.com',
-//     phone: '+91 54321 09876',
-//     dateJoined: '2023-01-25T11:10:00',
-//     totalOrders: 10,
-//     totalSpent: 11875.25,
-//     address: {
-//       street: '222 Green Valley',
-//       city: 'Pune',
-//       state: 'Maharashtra',
-//       pincode: '411001'
-//     },
-//     status: 'active',
-//     type: 'licensee'
-//   },
-//   {
-//     id: '6',
-//     name: 'Neha Gupta',
-//     email: 'neha.g@example.com',
-//     phone: '+91 43210 98765',
-//     dateJoined: '2023-04-12T13:40:00',
-//     totalOrders: 7,
-//     totalSpent: 8945.00,
-//     address: {
-//       street: '333 River View Apartments',
-//       city: 'Kolkata',
-//       state: 'West Bengal',
-//       pincode: '700001'
-//     },
-//     status: 'active',
-//     type: 'unlicensed'
-//   },
-//   {
-//     id: '7',
-//     name: 'Rajesh Khanna',
-//     email: 'rajesh.k@example.com',
-//     phone: '+91 32109 87654',
-//     dateJoined: '2023-03-22T08:55:00',
-//     totalOrders: 3,
-//     totalSpent: 4450.50,
-//     address: {
-//       street: '444 Mountain View',
-//       city: 'Chennai',
-//       state: 'Tamil Nadu',
-//       pincode: '600001'
-//     },
-//     status: 'inactive',
-//     type: 'unlicensed'
-//   },
-//   {
-//     id: '8',
-//     name: 'Ananya Desai',
-//     email: 'ananya.d@example.com',
-//     phone: '+91 21098 76543',
-//     dateJoined: '2023-05-11T15:30:00',
-//     totalOrders: 9,
-//     totalSpent: 12150.00,
-//     address: {
-//       street: '555 Sunset Boulevard',
-//       city: 'Ahmedabad',
-//       state: 'Gujarat',
-//       pincode: '380001'
-//     },
-//     status: 'active',
-//     type: 'licensee'
-//   }
-// ];
 
 export default function CustomersPage() {
   const router = useRouter();
@@ -197,8 +56,9 @@ export default function CustomersPage() {
         
         const token = getCookie('token');
         console.log('Token:', token);
+        console.log('API URL:', `${env.app.apiUrl}/admin/users`);
         // Append the query parameters to the URL
-        const response = await fetch(`http://localhost:3000/api/admin/users`, {
+        const response = await fetch(`${env.app.apiUrl}/admin/users`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
