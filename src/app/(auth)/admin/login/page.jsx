@@ -127,25 +127,25 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-xl overflow-hidden w-full">
+    <div className="bg-white rounded-xl shadow-xl overflow-hidden w-full max-w-full mx-auto">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-center">
-        <div className="inline-flex items-center justify-center bg-white rounded-full p-2 shadow-lg mb-4">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 sm:p-6 text-center">
+        <div className="inline-flex items-center justify-center bg-white rounded-full p-2 shadow-lg mb-3 sm:mb-4">
           <Image
             src="https://images.unsplash.com/photo-1563213126-a4273aed2016?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
             alt="DavaDukaan Logo"
-            width={60}
-            height={60}
+            width={50}
+            height={50}
             className="rounded-full"
           />
         </div>
-        <h1 className="text-2xl font-bold text-white">DavaDukaan Admin Portal</h1>
-        <p className="text-blue-100 text-sm mt-1">Manage your medical store efficiently</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-white">DavaDukaan Admin Portal</h1>
+        <p className="text-blue-100 text-xs sm:text-sm mt-1">Manage your medical store efficiently</p>
       </div>
 
       {/* Login Form */}
-      <div className="p-8">
-        <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+      <div className="p-4 sm:p-8">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6 flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
           </svg>
@@ -154,7 +154,7 @@ export default function AdminLoginPage() {
         
         {/* Error message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded text-sm">
             <div className="flex">
               <svg className="h-5 w-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -164,7 +164,7 @@ export default function AdminLoginPage() {
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
               Email Address
@@ -184,7 +184,7 @@ export default function AdminLoginPage() {
                 value={formData.email}
                 onChange={handleChange}
                 disabled={loading}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+                className="w-full pl-10 pr-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                 placeholder="admin@example.com"
               />
             </div>
@@ -208,13 +208,13 @@ export default function AdminLoginPage() {
                 value={formData.password}
                 onChange={handleChange}
                 disabled={loading}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+                className="w-full pl-10 pr-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                 placeholder="••••••••"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
             <div className="flex items-center">
               <input
                 id="remember-me"
@@ -237,7 +237,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-[50px] flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition duration-200 ease-in-out shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-[45px] sm:h-[50px] flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition duration-200 ease-in-out shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             {loading ? (
               <span className="flex items-center justify-center">
@@ -259,14 +259,14 @@ export default function AdminLoginPage() {
         </form>
       </div>
       
-      <div className="px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-        <Link href="/" className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center">
+      <div className="px-4 sm:px-8 py-3 sm:py-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
+        <Link href="/" className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
           </svg>
           Return to main site
         </Link>
-        <p className="text-sm text-gray-500">
+        <p className="text-xs sm:text-sm text-gray-500">
           © {new Date().getFullYear()} DavaDukaan
         </p>
       </div>
