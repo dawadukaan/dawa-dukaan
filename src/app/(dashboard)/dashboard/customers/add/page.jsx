@@ -24,10 +24,11 @@ export default function AddCustomerPage() {
     name: '',
     email: '',
     phone: '',
-    password: 'Password@123', // Default password for new customers
+    password: '', // Default password for new customers
     isActive: true,
     role: 'customer',
     type: 'unlicensed',
+    avatar: '',
     address: {
       street: '',
       city: '',
@@ -38,16 +39,18 @@ export default function AddCustomerPage() {
       licenseNumber: '',
       expiryDate: '',
       issuingAuthority: ''
-    },
-    notes: ''
+    }
   });
+
+  // Handle image upload
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   // Define steps
   const steps = [
     { id: 1, name: 'Basic Information', icon: FiUser },
     { id: 2, name: 'Address', icon: FiHome },
     { id: 3, name: 'License Details', icon: FiFileText },
-    { id: 4, name: 'Additional Information', icon: FiInfo }
+    { id: 4, name: 'Security & Profile', icon: FiShield }
   ];
 
   // Handle input change
@@ -153,8 +156,13 @@ export default function AddCustomerPage() {
         
         return true;
         
-      case 4: // Additional Information
-        // Notes are optional, so always return true
+      case 4: // Security & Profile
+        // Password is optional, but if provided, validate it
+        if (customer.password && customer.password.length < 6) {
+          setFormError('Password must be at least 6 characters');
+          return false;
+        }
+        
         return true;
         
       default:
@@ -188,6 +196,24 @@ export default function AddCustomerPage() {
     }
   };
 
+  // Handle image upload
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Create a preview URL for the image
+      const previewUrl = URL.createObjectURL(file);
+      setAvatarPreview(previewUrl);
+      
+      // For a real implementation, you would upload the image to a server
+      // and get back a URL to store in customer.avatar
+      // For now, we'll just store the file name
+      setCustomer({
+        ...customer,
+        avatar: file.name
+      });
+    }
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -208,11 +234,11 @@ export default function AddCustomerPage() {
         name: customer.name,
         email: customer.email,
         phone: customer.phone,
-        password: customer.password,
+        password: customer.password || 'Password@123', // Use default if empty
         isActive: customer.isActive,
         role: 'customer',
         type: customer.type || 'unlicensed',
-        notes: customer.notes
+        avatar: customer.avatar || '', // Include avatar if provided
       };
       
       // Add license details if customer is a licensee
@@ -607,20 +633,68 @@ export default function AddCustomerPage() {
       case 4:
         return (
           <div className="space-y-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Additional Information</h2>
-            <div>
-              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                Notes
-              </label>
-              <textarea
-                id="notes"
-                name="notes"
-                rows="4"
-                placeholder="Add any additional notes about this customer..."
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                value={customer.notes}
-                onChange={handleChange}
-              ></textarea>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Security & Profile Settings</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password (Optional)
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiShield className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Leave blank to use default password"
+                    className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    value={customer.password}
+                    onChange={handleChange}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  If left blank, the default password "Password@123" will be used.
+                </p>
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Profile Image (Optional)
+                </label>
+                <div className="flex items-center space-x-6">
+                  <div className="shrink-0">
+                    {avatarPreview ? (
+                      <img 
+                        className="h-16 w-16 object-cover rounded-full border border-gray-200" 
+                        src={avatarPreview} 
+                        alt="Profile preview" 
+                      />
+                    ) : (
+                      <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                        <FiUser className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <label className="block">
+                    <span className="sr-only">Choose profile photo</span>
+                    <input 
+                      type="file" 
+                      className="block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-lg file:border-0
+                        file:text-sm file:font-medium
+                        file:bg-green-50 file:text-green-700
+                        hover:file:bg-green-100
+                      "
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                  </label>
+                </div>
+              </div>
             </div>
             
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
