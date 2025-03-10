@@ -8,13 +8,12 @@ import { FiChevronDown, FiChevronRight, FiList } from 'react-icons/fi';
 
 export function Sidebar({ isOpen, onClose }) {
   const pathname = usePathname();
-  const [expandedItems, setExpandedItems] = useState({});
+  const [expandedItem, setExpandedItem] = useState(null);
 
   const toggleExpand = (itemPath) => {
-    setExpandedItems(prev => ({
-      ...prev,
-      [itemPath]: !prev[itemPath]
-    }));
+    setExpandedItem(prevExpanded => 
+      prevExpanded === itemPath ? null : itemPath
+    );
   };
 
   return (
@@ -29,7 +28,7 @@ export function Sidebar({ isOpen, onClose }) {
             const Icon = item.icon;
             const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
             const hasSubItems = item.subItems && item.subItems.length > 0;
-            const isExpanded = expandedItems[item.path];
+            const isExpanded = expandedItem === item.path;
             
             return (
               <div key={item.path}>

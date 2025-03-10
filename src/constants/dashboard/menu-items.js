@@ -132,6 +132,11 @@ export const MENU_ITEMS = [
         label: 'Firebase Admin',
         path: '/dashboard/settings/firebase-admin',
         icon: FiDatabase
+      },
+      {
+        label: 'PhonePe',
+        path: '/dashboard/settings/phonepe',
+        icon: FiCreditCard
       }
     ]
   }

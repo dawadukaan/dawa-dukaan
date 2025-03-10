@@ -157,23 +157,23 @@ export function TopNav({ onToggleSidebar }) {
                 </div>
                 
                 <div className="py-1">
-                  <Link 
+                  {/* <Link 
                     href="/admin/profile" 
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => setIsDropdownOpen(false)}
                   >
                     <FiUser className="mr-3 h-4 w-4 text-gray-500" />
                     Profile
-                  </Link>
+                  </Link> */}
                   
-                  <Link 
+                  {/* <Link 
                     href="/admin/settings" 
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => setIsDropdownOpen(false)}
                   >
                     <FiSettings className="mr-3 h-4 w-4 text-gray-500" />
                     Settings
-                  </Link>
+                  </Link> */}
                 </div>
                 
                 <div className="py-1 border-t border-gray-100">
