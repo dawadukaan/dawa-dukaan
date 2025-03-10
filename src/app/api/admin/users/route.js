@@ -54,6 +54,7 @@ export async function GET(request) {
     try {
       users = await User.find(query)
         .populate('defaultAddress')
+        .populate('addresses')
         .select('-password')
         .sort({ createdAt: -1 })
         .skip(skip)

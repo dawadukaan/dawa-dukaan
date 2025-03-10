@@ -106,28 +106,18 @@ export const MENU_ITEMS = [
       }
     ]
   },
-  {
-    label: 'Payments',
-    path: '/dashboard/payments',
-    icon: FiCreditCard,
-    description: 'View payment transactions'
-  },
+  // {
+  //   label: 'Payments',
+  //   path: '/dashboard/payments',
+  //   icon: FiCreditCard,
+  //   description: 'View payment transactions'
+  // },
   {
     label: 'Settings',
     path: '/dashboard/settings',
     icon: FiSettings,
     description: 'Configure your store settings',
     subItems: [
-      {
-        label: 'Website',
-        path: '/dashboard/settings/website',
-        icon: FiList
-      },
-      {
-        label: 'Payment Gateway',
-        path: '/dashboard/settings/payment-gateway',
-        icon: FiCreditCard
-      },
       { 
         label: 'Cloudinary',
         path: '/dashboard/settings/cloudinary',

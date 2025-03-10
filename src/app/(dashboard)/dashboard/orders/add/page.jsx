@@ -5,135 +5,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   FiSave, FiPlus, FiX, FiSearch, 
-  FiShoppingCart, FiUser, FiMapPin, FiPackage 
+  FiShoppingCart, FiUser, FiMapPin, FiPackage,
+  FiLoader
 } from 'react-icons/fi';
+import { getCookie } from 'cookies-next';
+import env from '@/lib/config/env';
 
-// Sample products for demo
-const sampleProducts = [
-  {
-    id: '1',
-    name: 'Organic Tomatoes',
-    sku: 'VEG-TOM-001',
-    baseQuantity: '500',
-    quantityUnit: 'g',
-    price: 45.00,
-    stock: 120,
-    image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-  },
-  {
-    id: '2',
-    name: 'Fresh Spinach',
-    sku: 'VEG-SPI-002',
-    baseQuantity: '250',
-    quantityUnit: 'g',
-    price: 30.00,
-    stock: 80,
-    image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-  },
-  {
-    id: '3',
-    name: 'Red Bell Peppers',
-    sku: 'VEG-PEP-003',
-    baseQuantity: '500',
-    quantityUnit: 'g',
-    price: 60.00,
-    stock: 45,
-    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-  },
-  {
-    id: '4',
-    name: 'Organic Carrots',
-    sku: 'VEG-CAR-004',
-    baseQuantity: '1',
-    quantityUnit: 'kg',
-    price: 40.00,
-    stock: 200,
-    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-  },
-  {
-    id: '5',
-    name: 'Purple Cabbage',
-    sku: 'VEG-CAB-005',
-    baseQuantity: '1',
-    quantityUnit: 'pcs',
-    price: 55.00,
-    stock: 35,
-    image: 'https://images.unsplash.com/photo-1594282486552-05a9f0a53ca7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-  },
-  {
-    id: '6',
-    name: 'Organic Potatoes',
-    sku: 'VEG-POT-006',
-    baseQuantity: '1',
-    quantityUnit: 'kg',
-    price: 35.00,
-    stock: 150,
-    image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-  }
-];
-
-// Sample customers for demo
-const sampleCustomers = [
-  {
-    id: '1',
-    name: 'Rahul Sharma',
-    email: 'rahul.s@example.com',
-    phone: '+91 98765 43210',
-    addresses: [
-      {
-        id: 'addr1',
-        type: 'home',
-        street: '123 Main Street, Apartment 4B',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        pincode: '400001'
-      },
-      {
-        id: 'addr2',
-        type: 'work',
-        street: '456 Business Park, Building C',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        pincode: '400051'
-      }
-    ]
-  },
-  {
-    id: '2',
-    name: 'Priya Patel',
-    email: 'priya.p@example.com',
-    phone: '+91 87654 32109',
-    addresses: [
-      {
-        id: 'addr3',
-        type: 'home',
-        street: '456 Park Avenue',
-        city: 'Bangalore',
-        state: 'Karnataka',
-        pincode: '560001'
-      }
-    ]
-  },
-  {
-    id: '3',
-    name: 'Amit Kumar',
-    email: 'amit.k@example.com',
-    phone: '+91 76543 21098',
-    addresses: [
-      {
-        id: 'addr4',
-        type: 'home',
-        street: '789 Lake View Road',
-        city: 'Delhi',
-        state: 'Delhi',
-        pincode: '110001'
-      }
-    ]
-  }
-];
 
 export default function CreateOrderPage() {
   const router = useRouter();
+  const token = getCookie('token');
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('customer');
   const [productSearchTerm, setProductSearchTerm] = useState('');
@@ -160,32 +41,111 @@ export default function CreateOrderPage() {
     status: 'pending'
   });
 
-  // Filter products based on search term
-  const filteredProducts = sampleProducts.filter(product => {
-    if (!productSearchTerm) return true;
+  // State for API data
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch customers from API
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setIsLoadingCustomers(true);
+        setError(null);
+        
+        const response = await fetch(`${env.app.apiUrl}/admin/users`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch customers');
+        }
+        
+        const data = await response.json();
+        if (data.success && data.data.users) {
+          setCustomers(data.data.users);
+        } else {
+          throw new Error(data.message || 'Failed to fetch customers');
+        }
+      } catch (err) {
+        console.error('Error fetching customers:', err);
+        setError(err.message);
+      } finally {
+        setIsLoadingCustomers(false);
+      }
+    };
     
-    const searchLower = productSearchTerm.toLowerCase();
-    return (
-      product.name.toLowerCase().includes(searchLower) ||
-      product.sku.toLowerCase().includes(searchLower)
-    );
-  });
+    fetchCustomers();
+  }, []);
+
+  // Fetch products based on search term
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!productSearchTerm || productSearchTerm.length < 2) {
+        return;
+      }
+      
+      try {
+        setIsLoadingProducts(true);
+        setError(null);
+        
+        const response = await fetch(`${env.app.apiUrl}/admin/products?search=${encodeURIComponent(productSearchTerm)}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        
+        const data = await response.json();
+        if (data.success && data.data.products) {
+          setProducts(data.data.products);
+        } else {
+          throw new Error(data.message || 'Failed to fetch products');
+        }
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError(err.message);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+    
+    const debounceTimer = setTimeout(() => {
+      fetchProducts();
+    }, 500);
+    
+    return () => clearTimeout(debounceTimer);
+  }, [productSearchTerm, token]);
 
   // Filter customers based on search term
-  const filteredCustomers = sampleCustomers.filter(customer => {
+  const filteredCustomers = customers.filter(customer => {
     if (!customerSearchTerm) return true;
     
     const searchLower = customerSearchTerm.toLowerCase();
     return (
       customer.name.toLowerCase().includes(searchLower) ||
-      customer.email.toLowerCase().includes(searchLower) ||
-      customer.phone.includes(customerSearchTerm)
+      (customer.email && customer.email.toLowerCase().includes(searchLower)) ||
+      (customer.phone && customer.phone.includes(customerSearchTerm))
     );
   });
 
   // Calculate order summary
   const calculateSummary = () => {
-    const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = orderItems.reduce((sum, item) => {
+      const price = item.userType === 'licensee' ? 
+        (item.salePrice?.licensedPrice || item.price.licensedPrice) : 
+        (item.salePrice?.unlicensedPrice || item.price.unlicensedPrice);
+      return sum + (price * item.quantity);
+    }, 0);
+    
     const shippingFee = parseFloat(orderDetails.shippingFee) || 0;
     const discount = parseFloat(orderDetails.discount) || 0;
     const total = subtotal + shippingFee - discount;
@@ -202,7 +162,7 @@ export default function CreateOrderPage() {
 
   // Handle adding product to order
   const handleAddProduct = (product) => {
-    const existingItemIndex = orderItems.findIndex(item => item.id === product.id);
+    const existingItemIndex = orderItems.findIndex(item => item._id === product._id);
     
     if (existingItemIndex >= 0) {
       // Product already in cart, increment quantity
@@ -211,28 +171,36 @@ export default function CreateOrderPage() {
       setOrderItems(updatedItems);
     } else {
       // Add new product to cart
+      const userType = selectedCustomer?.type || 'unlicensed';
+      const price = userType === 'licensee' ? 
+        product.price.licensedPrice : 
+        product.price.unlicensedPrice;
+      
       setOrderItems([
         ...orderItems,
         {
-          id: product.id,
+          _id: product._id,
           name: product.name,
           sku: product.sku,
           price: product.price,
+          salePrice: product.salePrice,
           baseQuantity: product.baseQuantity,
           quantityUnit: product.quantityUnit,
-          image: product.image,
-          quantity: 1
+          image: product.images && product.images.length > 0 ? product.images[0] : null,
+          quantity: 1,
+          userType
         }
       ]);
     }
     
     // Clear search after adding
     setProductSearchTerm('');
+    setProducts([]);
   };
 
   // Handle removing product from order
   const handleRemoveProduct = (productId) => {
-    setOrderItems(orderItems.filter(item => item.id !== productId));
+    setOrderItems(orderItems.filter(item => item._id !== productId));
   };
 
   // Handle quantity change
@@ -240,7 +208,7 @@ export default function CreateOrderPage() {
     if (newQuantity < 1) return;
     
     const updatedItems = orderItems.map(item => {
-      if (item.id === productId) {
+      if (item._id === productId) {
         return { ...item, quantity: newQuantity };
       }
       return item;
@@ -252,7 +220,25 @@ export default function CreateOrderPage() {
   // Handle selecting a customer
   const handleSelectCustomer = (customer) => {
     setSelectedCustomer(customer);
-    setSelectedAddress(customer.addresses[0] || null);
+    
+    // Update product prices based on customer type
+    if (orderItems.length > 0) {
+      const updatedItems = orderItems.map(item => ({
+        ...item,
+        userType: customer.type || 'unlicensed'
+      }));
+      setOrderItems(updatedItems);
+    }
+    
+    // Try to set default address if available
+    if (customer.defaultAddress) {
+      setSelectedAddress(customer.defaultAddress);
+    } else if (customer.addresses && customer.addresses.length > 0) {
+      setSelectedAddress(customer.addresses[0]);
+    } else {
+      setSelectedAddress(null);
+    }
+    
     setCustomerSearchTerm('');
   };
 
@@ -312,40 +298,76 @@ export default function CreateOrderPage() {
     setIsSaving(true);
     
     try {
-      // In a real app, you would send this to your API
-      // const orderData = {
-      //   customer: selectedCustomer ? selectedCustomer.id : 'new',
-      //   newCustomer: !selectedCustomer ? newCustomer : null,
-      //   shippingAddress: selectedAddress ? selectedAddress.id : 'new',
-      //   newAddress: !selectedAddress ? newCustomer.address : null,
-      //   items: orderItems,
-      //   ...orderDetails,
-      //   total: summary.total
-      // };
-      // 
-      // const response = await fetch('/api/orders', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(orderData),
-      // });
-      // 
-      // if (!response.ok) throw new Error('Failed to create order');
-      // const data = await response.json();
+      // Prepare order data
+      const orderData = {
+        customer: selectedCustomer ? selectedCustomer._id : null,
+        newCustomer: !selectedCustomer ? {
+          name: newCustomer.name,
+          email: newCustomer.email,
+          phone: newCustomer.phone,
+          type: 'unlicensed'
+        } : null,
+        shippingAddress: selectedAddress ? selectedAddress._id : null,
+        newAddress: !selectedAddress ? {
+          street: newCustomer.address.street,
+          city: newCustomer.address.city,
+          state: newCustomer.address.state,
+          pincode: newCustomer.address.pincode,
+          addressType: 'home'
+        } : null,
+        items: orderItems.map(item => ({
+          product: item._id,
+          quantity: item.quantity,
+          price: item.userType === 'licensee' ? 
+            (item.salePrice?.licensedPrice || item.price.licensedPrice) : 
+            (item.salePrice?.unlicensedPrice || item.price.unlicensedPrice)
+        })),
+        status: orderDetails.status,
+        paymentMethod: orderDetails.paymentMethod,
+        shippingFee: parseFloat(orderDetails.shippingFee) || 0,
+        discount: parseFloat(orderDetails.discount) || 0,
+        notes: orderDetails.notes,
+        total: summary.total
+      };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      console.log('Sending order data:', orderData);
+      
+      const response = await fetch(`${env.app.apiUrl}/admin/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(orderData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create order');
+      }
+      
+      const result = await response.json();
+      console.log('Order created:', result);
       
       // Redirect to orders page after successful creation
       router.push('/dashboard/orders');
       router.refresh();
     } catch (error) {
       console.error('Error creating order:', error);
-      alert('Failed to create order. Please try again.');
+      alert('Failed to create order: ' + error.message);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Format price based on customer type
+  const formatPrice = (item) => {
+    const userType = item.userType || (selectedCustomer?.type || 'unlicensed');
+    const price = userType === 'licensee' ? 
+      (item.salePrice?.licensedPrice || item.price.licensedPrice) : 
+      (item.salePrice?.unlicensedPrice || item.price.unlicensedPrice);
+    
+    return price.toFixed(2);
   };
 
   return (
@@ -461,7 +483,12 @@ export default function CreateOrderPage() {
                     </div>
                     
                     <div className="max-h-60 overflow-y-auto border rounded-lg">
-                      {filteredCustomers.length === 0 ? (
+                      {isLoadingCustomers ? (
+                        <div className="p-4 text-center text-gray-500">
+                          <FiLoader className="animate-spin h-5 w-5 mx-auto mb-2" />
+                          Loading customers...
+                        </div>
+                      ) : filteredCustomers.length === 0 ? (
                         <div className="p-4 text-center text-gray-500">
                           No customers found. Try a different search or create a new customer.
                         </div>
@@ -469,7 +496,7 @@ export default function CreateOrderPage() {
                         <ul className="divide-y divide-gray-200">
                           {filteredCustomers.map(customer => (
                             <li 
-                              key={customer.id}
+                              key={customer._id}
                               className="p-4 hover:bg-gray-50 cursor-pointer"
                               onClick={() => handleSelectCustomer(customer)}
                             >
@@ -478,6 +505,9 @@ export default function CreateOrderPage() {
                                   <p className="font-medium text-gray-900">{customer.name}</p>
                                   <p className="text-sm text-gray-500">{customer.email}</p>
                                   <p className="text-sm text-gray-500">{customer.phone}</p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    Type: <span className="capitalize">{customer.type || 'unlicensed'}</span>
+                                  </p>
                                 </div>
                                 <button
                                   type="button"
@@ -549,6 +579,9 @@ export default function CreateOrderPage() {
                         <h3 className="font-medium text-gray-900">{selectedCustomer.name}</h3>
                         <p className="text-sm text-gray-500">{selectedCustomer.email}</p>
                         <p className="text-sm text-gray-500">{selectedCustomer.phone}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Type: <span className="capitalize">{selectedCustomer.type || 'unlicensed'}</span>
+                        </p>
                       </div>
                       <button
                         type="button"
@@ -565,14 +598,14 @@ export default function CreateOrderPage() {
               <div>
                 <h2 className="text-lg font-medium text-gray-900 mb-4">Shipping Address</h2>
                 
-                {selectedCustomer && selectedCustomer.addresses.length > 0 ? (
+                {selectedCustomer && selectedCustomer.addresses && selectedCustomer.addresses.length > 0 ? (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedCustomer.addresses.map(address => (
+                      {selectedCustomer.addresses.map((address, index) => (
                         <div 
-                          key={address.id}
+                          key={address._id || `address-${index}`}
                           className={`border rounded-lg p-4 cursor-pointer ${
-                            selectedAddress && selectedAddress.id === address.id 
+                            selectedAddress && selectedAddress._id === address._id 
                               ? 'border-green-500 bg-green-50' 
                               : 'hover:bg-gray-50'
                           }`}
@@ -580,13 +613,13 @@ export default function CreateOrderPage() {
                         >
                           <div className="flex justify-between">
                             <div>
-                              <p className="font-medium text-gray-900 capitalize">{address.type} Address</p>
-                              <p className="text-sm text-gray-500">{address.street}</p>
+                              <p className="font-medium text-gray-900 capitalize">{address.addressType || 'Default'} Address</p>
+                              <p className="text-sm text-gray-500">{address.street || address.location || 'No location provided'}</p>
                               <p className="text-sm text-gray-500">
-                                {address.city}, {address.state} {address.pincode}
+                                {address.city || 'No city'}, {address.state || 'No state'} {address.pincode || 'No pincode'}
                               </p>
                             </div>
-                            {selectedAddress && selectedAddress.id === address.id && (
+                            {selectedAddress && selectedAddress._id === address._id && (
                               <div className="h-5 w-5 bg-green-500 rounded-full flex items-center justify-center">
                                 <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -609,65 +642,75 @@ export default function CreateOrderPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="address.street" className="block text-sm font-medium text-gray-700 mb-1">
-                        Street Address <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="address.street"
-                        name="address.street"
-                        type="text"
-                        required
-                        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        value={newCustomer.address.street}
-                        onChange={handleNewCustomerChange}
-                      />
-                    </div>
+                  <div>
+                    {selectedCustomer && (
+                      <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-yellow-700 text-sm">
+                          No addresses found for this customer. Please enter a shipping address below.
+                        </p>
+                      </div>
+                    )}
                     
-                    <div>
-                      <label htmlFor="address.city" className="block text-sm font-medium text-gray-700 mb-1">
-                        City <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="address.city"
-                        name="address.city"
-                        type="text"
-                        required
-                        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        value={newCustomer.address.city}
-                        onChange={handleNewCustomerChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="address.state" className="block text-sm font-medium text-gray-700 mb-1">
-                        State <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="address.state"
-                        name="address.state"
-                        type="text"
-                        required
-                        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        value={newCustomer.address.state}
-                        onChange={handleNewCustomerChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="address.pincode" className="block text-sm font-medium text-gray-700 mb-1">
-                        PIN Code <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="address.pincode"
-                        name="address.pincode"
-                        type="text"
-                        required
-                        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        value={newCustomer.address.pincode}
-                        onChange={handleNewCustomerChange}
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="address.street" className="block text-sm font-medium text-gray-700 mb-1">
+                          Street Address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="address.street"
+                          name="address.street"
+                          type="text"
+                          required
+                          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          value={newCustomer.address.street}
+                          onChange={handleNewCustomerChange}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="address.city" className="block text-sm font-medium text-gray-700 mb-1">
+                          City <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="address.city"
+                          name="address.city"
+                          type="text"
+                          required
+                          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          value={newCustomer.address.city}
+                          onChange={handleNewCustomerChange}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="address.state" className="block text-sm font-medium text-gray-700 mb-1">
+                          State <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="address.state"
+                          name="address.state"
+                          type="text"
+                          required
+                          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          value={newCustomer.address.state}
+                          onChange={handleNewCustomerChange}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="address.pincode" className="block text-sm font-medium text-gray-700 mb-1">
+                          PIN Code <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="address.pincode"
+                          name="address.pincode"
+                          type="text"
+                          required
+                          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          value={newCustomer.address.pincode}
+                          onChange={handleNewCustomerChange}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -697,7 +740,7 @@ export default function CreateOrderPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="Search products by name or SKU"
+                    placeholder="Search products by name or SKU (min 2 characters)"
                     className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                     value={productSearchTerm}
                     onChange={(e) => setProductSearchTerm(e.target.value)}
@@ -705,24 +748,33 @@ export default function CreateOrderPage() {
                 </div>
                 
                 <div className="mt-4 max-h-60 overflow-y-auto border rounded-lg">
-                  {filteredProducts.length === 0 ? (
+                  {isLoadingProducts ? (
+                    <div className="p-4 text-center text-gray-500">
+                      <FiLoader className="animate-spin h-5 w-5 mx-auto mb-2" />
+                      Searching products...
+                    </div>
+                  ) : productSearchTerm.length < 2 ? (
+                    <div className="p-4 text-center text-gray-500">
+                      Type at least 2 characters to search for products
+                    </div>
+                  ) : products.length === 0 ? (
                     <div className="p-4 text-center text-gray-500">
                       No products found. Try a different search term.
                     </div>
                   ) : (
                     <ul className="divide-y divide-gray-200">
-                      {filteredProducts.map(product => (
+                      {products.map(product => (
                         <li 
-                          key={product.id}
+                          key={product._id}
                           className="p-4 hover:bg-gray-50 cursor-pointer"
                           onClick={() => handleAddProduct(product)}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
                               <div className="w-12 h-12 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 mr-3">
-                                {product.image ? (
+                                {product.images && product.images.length > 0 ? (
                                   <img 
-                                    src={product.image} 
+                                    src={product.images[0]} 
                                     alt={product.name} 
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
@@ -740,7 +792,11 @@ export default function CreateOrderPage() {
                                 <p className="font-medium text-gray-900">{product.name}</p>
                                 <p className="text-sm text-gray-500">SKU: {product.sku}</p>
                                 <p className="text-sm text-gray-500">
-                                  {product.baseQuantity} {product.quantityUnit} | ₹{product.price.toFixed(2)}
+                                  {product.baseQuantity} {product.quantityUnit} | ₹
+                                  {selectedCustomer?.type === 'licensee' 
+                                    ? (product.salePrice?.licensedPrice || product.price.licensedPrice).toFixed(2)
+                                    : (product.salePrice?.unlicensedPrice || product.price.unlicensedPrice).toFixed(2)
+                                  }
                                 </p>
                               </div>
                             </div>
@@ -790,7 +846,7 @@ export default function CreateOrderPage() {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {orderItems.map((item) => (
-                          <tr key={item.id}>
+                          <tr key={item._id}>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="w-10 h-10 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 mr-3">
@@ -817,13 +873,13 @@ export default function CreateOrderPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              ₹{item.price.toFixed(2)}
+                              ₹{formatPrice(item)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <button
                                   type="button"
-                                  onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                                  onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
                                   className="p-1 border rounded-l-md hover:bg-gray-100"
                                 >
                                   -
@@ -832,12 +888,12 @@ export default function CreateOrderPage() {
                                   type="number"
                                   min="1"
                                   value={item.quantity}
-                                  onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 1)}
+                                  onChange={(e) => handleQuantityChange(item._id, parseInt(e.target.value) || 1)}
                                   className="w-12 border-t border-b text-center py-1"
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                                  onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
                                   className="p-1 border rounded-r-md hover:bg-gray-100"
                                 >
                                   +
@@ -845,12 +901,12 @@ export default function CreateOrderPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              ₹{(item.price * item.quantity).toFixed(2)}
+                              ₹{(parseFloat(formatPrice(item)) * item.quantity).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <button
                                 type="button"
-                                onClick={() => handleRemoveProduct(item.id)}
+                                onClick={() => handleRemoveProduct(item._id)}
                                 className="text-red-600 hover:text-red-900"
                               >
                                 <FiX className="h-5 w-5" />
@@ -1007,12 +1063,16 @@ export default function CreateOrderPage() {
                           <p className="font-medium">{selectedCustomer.name}</p>
                           <p className="text-sm text-gray-600">{selectedCustomer.email}</p>
                           <p className="text-sm text-gray-600">{selectedCustomer.phone}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Type: <span className="capitalize">{selectedCustomer.type || 'unlicensed'}</span>
+                          </p>
                         </div>
                       ) : (
                         <div>
                           <p className="font-medium">{newCustomer.name || 'New Customer'}</p>
                           <p className="text-sm text-gray-600">{newCustomer.email || 'No email provided'}</p>
                           <p className="text-sm text-gray-600">{newCustomer.phone || 'No phone provided'}</p>
+                          <p className="text-xs text-gray-500 mt-1">Type: unlicensed</p>
                         </div>
                       )}
                     </div>
@@ -1023,8 +1083,10 @@ export default function CreateOrderPage() {
                     <div className="bg-gray-50 rounded-lg p-4 border">
                       {selectedAddress ? (
                         <div>
-                          <p className="text-sm">{selectedAddress.street}</p>
-                          <p className="text-sm">{selectedAddress.city}, {selectedAddress.state} {selectedAddress.pincode}</p>
+                          <p className="text-sm">{selectedAddress.street || selectedAddress.location || 'No location provided'}</p>
+                          <p className="text-sm">
+                            {selectedAddress.city || 'No city'}, {selectedAddress.state || 'No state'} {selectedAddress.pincode || 'No pincode'}
+                          </p>
                         </div>
                       ) : (
                         <div>
@@ -1045,12 +1107,12 @@ export default function CreateOrderPage() {
                       ) : (
                         <ul className="space-y-2">
                           {orderItems.map(item => (
-                            <li key={item.id} className="flex justify-between text-sm">
+                            <li key={item._id || `item-${item.sku}-${Math.random()}`} className="flex justify-between text-sm">
                               <span>
                                 {item.name} x {item.quantity}
                               </span>
                               <span className="font-medium">
-                                ₹{(item.price * item.quantity).toFixed(2)}
+                                ₹{(parseFloat(formatPrice(item)) * item.quantity).toFixed(2)}
                               </span>
                             </li>
                           ))}

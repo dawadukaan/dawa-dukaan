@@ -9,175 +9,15 @@ import {
   FiSearch, FiFilter, FiEye, FiDownload, 
   FiCalendar, FiChevronDown, FiChevronUp, FiX, FiPlus 
 } from 'react-icons/fi';
-
-// Sample orders data for demonstration
-const sampleOrders = [
-  {
-    id: 'ORD-2023-1001',
-    customer: {
-      name: 'Rahul Sharma',
-      email: 'rahul.s@example.com',
-      phone: '+91 98765 43210'
-    },
-    date: '2023-11-15T10:30:00',
-    total: 1250.00,
-    items: 5,
-    status: 'delivered',
-    paymentStatus: 'paid',
-    paymentMethod: 'online',
-    shippingAddress: {
-      street: '123 Main Street, Apartment 4B',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001'
-    }
-  },
-  {
-    id: 'ORD-2023-1002',
-    customer: {
-      name: 'Priya Patel',
-      email: 'priya.p@example.com',
-      phone: '+91 87654 32109'
-    },
-    date: '2023-11-14T14:45:00',
-    total: 875.50,
-    items: 3,
-    status: 'processing',
-    paymentStatus: 'paid',
-    paymentMethod: 'online',
-    shippingAddress: {
-      street: '456 Park Avenue',
-      city: 'Bangalore',
-      state: 'Karnataka',
-      pincode: '560001'
-    }
-  },
-  {
-    id: 'ORD-2023-1003',
-    customer: {
-      name: 'Amit Kumar',
-      email: 'amit.k@example.com',
-      phone: '+91 76543 21098'
-    },
-    date: '2023-11-14T09:15:00',
-    total: 2340.00,
-    items: 8,
-    status: 'shipped',
-    paymentStatus: 'paid',
-    paymentMethod: 'online',
-    shippingAddress: {
-      street: '789 Lake View Road',
-      city: 'Delhi',
-      state: 'Delhi',
-      pincode: '110001'
-    }
-  },
-  {
-    id: 'ORD-2023-1004',
-    customer: {
-      name: 'Sneha Reddy',
-      email: 'sneha.r@example.com',
-      phone: '+91 65432 10987'
-    },
-    date: '2023-11-13T16:20:00',
-    total: 560.75,
-    items: 2,
-    status: 'delivered',
-    paymentStatus: 'paid',
-    paymentMethod: 'cod',
-    shippingAddress: {
-      street: '101 Hill Road',
-      city: 'Hyderabad',
-      state: 'Telangana',
-      pincode: '500001'
-    }
-  },
-  {
-    id: 'ORD-2023-1005',
-    customer: {
-      name: 'Vikram Singh',
-      email: 'vikram.s@example.com',
-      phone: '+91 54321 09876'
-    },
-    date: '2023-11-13T11:10:00',
-    total: 1875.25,
-    items: 6,
-    status: 'cancelled',
-    paymentStatus: 'refunded',
-    paymentMethod: 'online',
-    shippingAddress: {
-      street: '222 Green Valley',
-      city: 'Pune',
-      state: 'Maharashtra',
-      pincode: '411001'
-    }
-  },
-  {
-    id: 'ORD-2023-1006',
-    customer: {
-      name: 'Neha Gupta',
-      email: 'neha.g@example.com',
-      phone: '+91 43210 98765'
-    },
-    date: '2023-11-12T13:40:00',
-    total: 945.00,
-    items: 4,
-    status: 'delivered',
-    paymentStatus: 'paid',
-    paymentMethod: 'online',
-    shippingAddress: {
-      street: '333 River View Apartments',
-      city: 'Kolkata',
-      state: 'West Bengal',
-      pincode: '700001'
-    }
-  },
-  {
-    id: 'ORD-2023-1007',
-    customer: {
-      name: 'Rajesh Khanna',
-      email: 'rajesh.k@example.com',
-      phone: '+91 32109 87654'
-    },
-    date: '2023-11-12T08:55:00',
-    total: 1450.50,
-    items: 5,
-    status: 'pending',
-    paymentStatus: 'pending',
-    paymentMethod: 'cod',
-    shippingAddress: {
-      street: '444 Mountain View',
-      city: 'Chennai',
-      state: 'Tamil Nadu',
-      pincode: '600001'
-    }
-  },
-  {
-    id: 'ORD-2023-1008',
-    customer: {
-      name: 'Ananya Desai',
-      email: 'ananya.d@example.com',
-      phone: '+91 21098 76543'
-    },
-    date: '2023-11-11T15:30:00',
-    total: 2150.00,
-    items: 7,
-    status: 'delivered',
-    paymentStatus: 'paid',
-    paymentMethod: 'online',
-    shippingAddress: {
-      street: '555 Sunset Boulevard',
-      city: 'Ahmedabad',
-      state: 'Gujarat',
-      pincode: '380001'
-    }
-  }
-];
+import { getCookie } from 'cookies-next';
+import env from '@/lib/config/env';
 
 export default function OrdersPage() {
   const router = useRouter();
+  const token = getCookie('token');
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -189,7 +29,7 @@ export default function OrdersPage() {
     }
   });
   const [sortConfig, setSortConfig] = useState({
-    key: 'date',
+    key: 'createdAt',
     direction: 'desc'
   });
 
@@ -197,23 +37,71 @@ export default function OrdersPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        // In a real app, you would fetch from your API
-        // const response = await fetch('/api/orders');
-        // if (!response.ok) throw new Error('Failed to fetch orders');
-        // const data = await response.json();
+        setIsLoading(true);
+        setError(null);
         
-        // For demo, we'll use sample data
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
-        setOrders(sampleOrders);
-        setIsLoading(false);
+        // Build query parameters for filtering
+        const queryParams = new URLSearchParams();
+        if (filters.status) queryParams.append('status', filters.status);
+        if (filters.dateRange.start) queryParams.append('startDate', filters.dateRange.start);
+        if (filters.dateRange.end) queryParams.append('endDate', filters.dateRange.end);
+        queryParams.append('sortBy', sortConfig.key);
+        queryParams.append('sortOrder', sortConfig.direction);
+        
+        const url = `${env.app.apiUrl}/admin/orders${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        
+        const response = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch orders');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.data.orders) {
+          // Transform API data to match the expected format
+          const formattedOrders = data.data.orders.map(order => ({
+            id: order.orderNumber,
+            _id: order._id,
+            customer: {
+              name: order.user?.name || 'Unknown',
+              email: order.user?.email || 'No email',
+              phone: order.user?.phone || 'No phone'
+            },
+            date: order.createdAt,
+            total: order.totalPrice,
+            items: order.orderItems.length,
+            status: order.status.toLowerCase(),
+            paymentStatus: order.isPaid ? 'paid' : 'pending',
+            paymentMethod: order.paymentMethod === 'PhonePe' ? 'online' : 'cod',
+            shippingAddress: {
+              street: order.shippingAddress?.street || order.shippingAddress?.location || '',
+              city: order.shippingAddress?.city || '',
+              state: order.shippingAddress?.state || '',
+              pincode: order.shippingAddress?.pincode || ''
+            },
+            orderItems: order.orderItems
+          }));
+          
+          setOrders(formattedOrders);
+        } else {
+          throw new Error(data.message || 'Failed to fetch orders');
+        }
       } catch (error) {
         console.error('Error fetching orders:', error);
+        setError(error.message);
+      } finally {
         setIsLoading(false);
       }
     };
     
     fetchOrders();
-  }, []);
+  }, [filters, sortConfig.key, sortConfig.direction, token]);
 
   // Handle sorting
   const requestSort = (key) => {
@@ -224,61 +112,22 @@ export default function OrdersPage() {
     setSortConfig({ key, direction });
   };
 
-  // Apply sorting to orders
-  const sortedOrders = [...orders].sort((a, b) => {
-    if (sortConfig.key === 'date') {
-      return sortConfig.direction === 'asc' 
-        ? new Date(a.date) - new Date(b.date)
-        : new Date(b.date) - new Date(a.date);
-    }
-    
-    if (sortConfig.key === 'total') {
-      return sortConfig.direction === 'asc' 
-        ? a.total - b.total
-        : b.total - a.total;
-    }
-    
-    if (a[sortConfig.key] < b[sortConfig.key]) {
-      return sortConfig.direction === 'asc' ? -1 : 1;
-    }
-    if (a[sortConfig.key] > b[sortConfig.key]) {
-      return sortConfig.direction === 'asc' ? 1 : -1;
-    }
-    return 0;
-  });
-
-  // Apply filters and search
-  const filteredOrders = sortedOrders.filter(order => {
+  // Apply search filter locally
+  const filteredOrders = orders.filter(order => {
     // Apply search term
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       const matchesId = order.id.toLowerCase().includes(searchLower);
-      const matchesCustomer = order.customer.name.toLowerCase().includes(searchLower) || 
-                             order.customer.email.toLowerCase().includes(searchLower) ||
-                             order.customer.phone.includes(searchTerm);
+      const matchesCustomer = 
+        order.customer.name.toLowerCase().includes(searchLower) || 
+        order.customer.email.toLowerCase().includes(searchLower) ||
+        (order.customer.phone && order.customer.phone.includes(searchTerm));
       
       if (!matchesId && !matchesCustomer) return false;
     }
     
-    // Apply status filter
-    if (filters.status && order.status !== filters.status) return false;
-    
-    // Apply payment status filter
+    // Payment status filter (this is applied locally since we're not sending it to the API)
     if (filters.paymentStatus && order.paymentStatus !== filters.paymentStatus) return false;
-    
-    // Apply date range filter
-    if (filters.dateRange.start) {
-      const orderDate = new Date(order.date);
-      const startDate = new Date(filters.dateRange.start);
-      if (orderDate < startDate) return false;
-    }
-    
-    if (filters.dateRange.end) {
-      const orderDate = new Date(order.date);
-      const endDate = new Date(filters.dateRange.end);
-      endDate.setHours(23, 59, 59); // Set to end of day
-      if (orderDate > endDate) return false;
-    }
     
     return true;
   });
@@ -438,11 +287,12 @@ export default function OrdersPage() {
                   onChange={handleFilterChange}
                 >
                   <option value="">All Statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="Processing">Processing</option>
+                  <option value="Packed">Packed</option>
+                  <option value="Shipped">Shipped</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Cancelled">Cancelled</option>
+                  <option value="Returned">Returned</option>
                 </select>
               </div>
               
@@ -523,6 +373,16 @@ export default function OrdersPage() {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
           </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-500 text-lg">Error: {error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 text-green-600 hover:text-green-700"
+            >
+              Try again
+            </button>
+          </div>
         ) : filteredOrders.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No orders found matching your criteria</p>
@@ -543,11 +403,11 @@ export default function OrdersPage() {
                   <th 
                     scope="col" 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => requestSort('id')}
+                    onClick={() => requestSort('orderNumber')}
                   >
                     <div className="flex items-center">
                       Order ID
-                      {sortConfig.key === 'id' && (
+                      {sortConfig.key === 'orderNumber' && (
                         <span className="ml-1">
                           {sortConfig.direction === 'asc' ? <FiChevronUp /> : <FiChevronDown />}
                         </span>
@@ -560,11 +420,11 @@ export default function OrdersPage() {
                   <th 
                     scope="col" 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => requestSort('date')}
+                    onClick={() => requestSort('createdAt')}
                   >
                     <div className="flex items-center">
                       Date
-                      {sortConfig.key === 'date' && (
+                      {sortConfig.key === 'createdAt' && (
                         <span className="ml-1">
                           {sortConfig.direction === 'asc' ? <FiChevronUp /> : <FiChevronDown />}
                         </span>
@@ -574,11 +434,11 @@ export default function OrdersPage() {
                   <th 
                     scope="col" 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => requestSort('total')}
+                    onClick={() => requestSort('totalPrice')}
                   >
                     <div className="flex items-center">
                       Total
-                      {sortConfig.key === 'total' && (
+                      {sortConfig.key === 'totalPrice' && (
                         <span className="ml-1">
                           {sortConfig.direction === 'asc' ? <FiChevronUp /> : <FiChevronDown />}
                         </span>
@@ -598,7 +458,7 @@ export default function OrdersPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
+                  <tr key={order._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {order.id}
                     </td>
@@ -614,8 +474,8 @@ export default function OrdersPage() {
                       <div className="text-xs text-gray-500">{order.items} items</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(order.status)}`}>
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(order.status.toLowerCase())}`}>
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -628,7 +488,7 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
-                        onClick={() => handleViewOrder(order.id)}
+                        onClick={() => handleViewOrder(order._id)}
                         className="text-green-600 hover:text-green-900 flex items-center justify-end"
                       >
                         <FiEye className="w-4 h-4 mr-1" />
@@ -651,23 +511,23 @@ export default function OrdersPage() {
         </div>
         
         <div className="bg-white rounded-lg shadow-sm p-4">
-          <h3 className="text-sm font-medium text-gray-500">Pending Orders</h3>
-          <p className="text-2xl font-bold text-yellow-600 mt-1">
-            {orders.filter(order => order.status === 'pending').length}
+          <h3 className="text-sm font-medium text-gray-500">Processing Orders</h3>
+          <p className="text-2xl font-bold text-blue-600 mt-1">
+            {orders.filter(order => order.status.toLowerCase() === 'processing').length}
           </p>
         </div>
         
         <div className="bg-white rounded-lg shadow-sm p-4">
-          <h3 className="text-sm font-medium text-gray-500">Processing Orders</h3>
-          <p className="text-2xl font-bold text-blue-600 mt-1">
-            {orders.filter(order => order.status === 'processing').length}
+          <h3 className="text-sm font-medium text-gray-500">Shipped Orders</h3>
+          <p className="text-2xl font-bold text-purple-600 mt-1">
+            {orders.filter(order => order.status.toLowerCase() === 'shipped').length}
           </p>
         </div>
         
         <div className="bg-white rounded-lg shadow-sm p-4">
           <h3 className="text-sm font-medium text-gray-500">Delivered Orders</h3>
           <p className="text-2xl font-bold text-green-600 mt-1">
-            {orders.filter(order => order.status === 'delivered').length}
+            {orders.filter(order => order.status.toLowerCase() === 'delivered').length}
           </p>
         </div>
       </div>

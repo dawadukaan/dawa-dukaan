@@ -14,10 +14,10 @@ export async function GET(request, { params }) {
     }
     
     const order = await Order.findById(params.id)
-      .populate('user', 'name email')
+      .populate('user', 'name email phone')
       .populate('shippingAddress')
       .populate('couponApplied')
-      .populate('statusHistory.updatedBy', 'name email');
+      .populate('statusHistory.updatedBy', 'name email phone');
     
     if (!order) {
       return errorResponse("Order not found", 404);

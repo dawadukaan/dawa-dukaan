@@ -1,133 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { use } from 'react';
 import { 
   FiEdit2, FiPrinter, FiMail, FiDownload, 
   FiShoppingCart, FiUser, FiMapPin, FiPackage,
   FiAlertTriangle, FiCheck, FiX
 } from 'react-icons/fi';
-
-// Sample orders data for demonstration
-const sampleOrders = [
-  {
-    id: 'ORD-2023-1001',
-    customer: {
-      id: '1',
-      name: 'Rahul Sharma',
-      email: 'rahul.s@example.com',
-      phone: '+91 98765 43210'
-    },
-    date: '2023-11-15T10:30:00',
-    total: 1250.00,
-    items: [
-      {
-        id: '1',
-        name: 'Organic Tomatoes',
-        sku: 'VEG-TOM-001',
-        baseQuantity: '500',
-        quantityUnit: 'g',
-        price: 45.00,
-        quantity: 2,
-        image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-      },
-      {
-        id: '3',
-        name: 'Red Bell Peppers',
-        sku: 'VEG-PEP-003',
-        baseQuantity: '500',
-        quantityUnit: 'g',
-        price: 60.00,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-      },
-      {
-        id: '4',
-        name: 'Organic Carrots',
-        sku: 'VEG-CAR-004',
-        baseQuantity: '1',
-        quantityUnit: 'kg',
-        price: 40.00,
-        quantity: 2,
-        image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-      }
-    ],
-    status: 'delivered',
-    paymentStatus: 'paid',
-    paymentMethod: 'online',
-    shippingFee: 40.00,
-    discount: 0.00,
-    notes: 'Please deliver in the morning.',
-    shippingAddress: {
-      street: '123 Main Street, Apartment 4B',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001'
-    },
-    timeline: [
-      { status: 'pending', date: '2023-11-15T10:30:00', note: 'Order placed' },
-      { status: 'processing', date: '2023-11-15T11:45:00', note: 'Payment confirmed' },
-      { status: 'shipped', date: '2023-11-16T09:20:00', note: 'Order shipped via Express Delivery' },
-      { status: 'delivered', date: '2023-11-17T14:30:00', note: 'Order delivered successfully' }
-    ]
-  },
-  {
-    id: 'ORD-2023-1002',
-    customer: {
-      id: '2',
-      name: 'Priya Patel',
-      email: 'priya.p@example.com',
-      phone: '+91 87654 32109'
-    },
-    date: '2023-11-14T14:45:00',
-    total: 875.50,
-    items: [
-      {
-        id: '2',
-        name: 'Fresh Spinach',
-        sku: 'VEG-SPI-002',
-        baseQuantity: '250',
-        quantityUnit: 'g',
-        price: 30.00,
-        quantity: 2,
-        image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-      },
-      {
-        id: '5',
-        name: 'Purple Cabbage',
-        sku: 'VEG-CAB-005',
-        baseQuantity: '1',
-        quantityUnit: 'pcs',
-        price: 55.00,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1594282486552-05a9f0a53ca7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'
-      }
-    ],
-    status: 'processing',
-    paymentStatus: 'paid',
-    paymentMethod: 'online',
-    shippingFee: 40.00,
-    discount: 0.00,
-    notes: '',
-    shippingAddress: {
-      street: '456 Park Avenue',
-      city: 'Bangalore',
-      state: 'Karnataka',
-      pincode: '560001'
-    },
-    timeline: [
-      { status: 'pending', date: '2023-11-14T14:45:00', note: 'Order placed' },
-      { status: 'processing', date: '2023-11-14T15:30:00', note: 'Payment confirmed' }
-    ]
-  }
-];
+import { getCookie } from 'cookies-next';
+import env from '@/lib/config/env';
 
 export default function ViewOrderPage({ params }) {
   const router = useRouter();
   const unwrappedParams = use(params);
   const { id } = unwrappedParams;
+  const token = getCookie('token');
   
   const [isLoading, setIsLoading] = useState(true);
   const [order, setOrder] = useState(null);
@@ -138,32 +26,83 @@ export default function ViewOrderPage({ params }) {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        // In a real app, you would fetch from your API
-        // const response = await fetch(`/api/orders/${id}`);
-        // if (!response.ok) throw new Error('Failed to fetch order');
-        // const data = await response.json();
+        setIsLoading(true);
+        setError(null);
         
-        // For demo, we'll use sample data
-        const foundOrder = sampleOrders.find(order => order.id === id);
+        const response = await fetch(`${env.app.apiUrl}/admin/orders/${id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        if (!foundOrder) {
-          console.log(`Order with ID ${id} not found in sample data`);
-          setError(`Order with ID ${id} not found. Please check the URL or return to the orders list.`);
-          setIsLoading(false);
-          return;
+        if (!response.ok) {
+          throw new Error('Failed to fetch order');
         }
         
-        setOrder(foundOrder);
-        setIsLoading(false);
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          // Transform API data to match the expected format
+          const orderData = data.data;
+          
+          // Format the order data
+          const formattedOrder = {
+            id: orderData.orderNumber,
+            _id: orderData._id,
+            customer: {
+              id: orderData.user?._id || '',
+              name: orderData.user?.name || 'Unknown',
+              email: orderData.user?.email || 'No email',
+              phone: orderData.user?.phone || 'No phone'
+            },
+            date: orderData.createdAt,
+            total: orderData.totalPrice,
+            items: orderData.orderItems.map(item => ({
+              id: item._id,
+              name: item.name,
+              sku: item.product,
+              baseQuantity: item.baseQuantity || '',
+              quantityUnit: '',
+              price: item.price,
+              quantity: item.quantity,
+              image: item.image
+            })),
+            status: orderData.status.toLowerCase(),
+            paymentStatus: orderData.isPaid ? 'paid' : 'pending',
+            paymentMethod: orderData.paymentMethod === 'PhonePe' ? 'online' : 'cod',
+            shippingFee: orderData.shippingPrice,
+            discount: orderData.couponDiscount || 0,
+            notes: orderData.notes || '',
+            shippingAddress: {
+              street: orderData.shippingAddress?.street || '',
+              city: orderData.shippingAddress?.city || '',
+              state: orderData.shippingAddress?.state || '',
+              pincode: orderData.shippingAddress?.pincode || ''
+            },
+            timeline: orderData.statusHistory.map(status => ({
+              status: status.status.toLowerCase(),
+              date: status.timestamp,
+              note: status.note || 'Status updated'
+            }))
+          };
+          
+          setOrder(formattedOrder);
+        } else {
+          throw new Error(data.message || 'Failed to fetch order');
+        }
       } catch (error) {
         console.error('Error fetching order:', error);
         setError(`Error loading order: ${error.message}`);
+      } finally {
         setIsLoading(false);
       }
     };
     
-    fetchOrder();
-  }, [id]);
+    if (id) {
+      fetchOrder();
+    }
+  }, [id, token]);
 
   // Calculate order summary
   const calculateSummary = () => {
@@ -203,12 +142,16 @@ export default function ViewOrderPage({ params }) {
         return 'bg-yellow-100 text-yellow-800';
       case 'processing':
         return 'bg-blue-100 text-blue-800';
+      case 'packed':
+        return 'bg-indigo-100 text-indigo-800';
       case 'shipped':
         return 'bg-purple-100 text-purple-800';
       case 'delivered':
         return 'bg-green-100 text-green-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
+      case 'returned':
+        return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -216,20 +159,41 @@ export default function ViewOrderPage({ params }) {
 
   // Handle print invoice
   const handlePrintInvoice = () => {
-    // In a real app, you would implement invoice printing functionality
-    alert('Print invoice functionality would be implemented here');
+    window.print();
   };
 
   // Handle send invoice email
-  const handleSendInvoiceEmail = () => {
-    // In a real app, you would implement email sending functionality
-    alert('Send invoice email functionality would be implemented here');
+  const handleSendInvoiceEmail = async () => {
+    try {
+      const response = await fetch(`${env.app.apiUrl}/admin/orders/${id}/send-invoice`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('Invoice sent successfully');
+      } else {
+        alert(`Failed to send invoice: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      alert('Failed to send invoice. Please try again.');
+    }
   };
 
   // Handle download invoice
-  const handleDownloadInvoice = () => {
-    // In a real app, you would implement invoice download functionality
-    alert('Download invoice functionality would be implemented here');
+  const handleDownloadInvoice = async () => {
+    try {
+      window.open(`${env.app.apiUrl}/admin/orders/${id}/invoice`, '_blank');
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      alert('Failed to download invoice. Please try again.');
+    }
   };
 
   if (isLoading) {
@@ -298,7 +262,7 @@ export default function ViewOrderPage({ params }) {
             Download
           </button>
           <Link 
-            href={`/dashboard/orders/edit/${id}`}
+            href={`/dashboard/orders/edit/${order._id}`}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
           >
             <FiEdit2 className="w-5 h-5 mr-2" />
@@ -479,14 +443,16 @@ export default function ViewOrderPage({ params }) {
                   <p className="font-medium">{order.customer.name}</p>
                   <p className="text-sm text-gray-600">{order.customer.email}</p>
                   <p className="text-sm text-gray-600">{order.customer.phone}</p>
-                  <div className="mt-2">
-                    <Link
-                      href={`/dashboard/customers/${order.customer.id}`}
-                      className="text-sm text-green-600 hover:text-green-700"
-                    >
-                      View Profile
-                    </Link>
-                  </div>
+                  {/* {order.customer.id && (
+                    <div className="mt-2">
+                      <Link
+                        href={`/dashboard/customers/${order.customer.id}`}
+                        className="text-sm text-green-600 hover:text-green-700"
+                      >
+                        View Profile
+                      </Link>
+                    </div>
+                  )} */}
                 </div>
               </div>
               
@@ -494,7 +460,7 @@ export default function ViewOrderPage({ params }) {
                 <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Actions</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <Link
-                    href={`/dashboard/orders/edit/${id}`}
+                    href={`/dashboard/orders/edit/${order._id}`}
                     className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                   >
                     <FiEdit2 className="w-4 h-4 mr-2" />
@@ -567,9 +533,11 @@ export default function ViewOrderPage({ params }) {
                             <div>
                               <div className="text-sm font-medium text-gray-900">{item.name}</div>
                               <div className="text-sm text-gray-500">SKU: {item.sku}</div>
-                              <div className="text-xs text-gray-500">
-                                {item.baseQuantity} {item.quantityUnit}
-                              </div>
+                              {item.baseQuantity && (
+                                <div className="text-xs text-gray-500">
+                                  {item.baseQuantity} {item.quantityUnit}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -640,12 +608,14 @@ export default function ViewOrderPage({ params }) {
                     <p className="text-sm text-gray-500">{order.customer.email}</p>
                     <p className="text-sm text-gray-500">{order.customer.phone}</p>
                   </div>
-                  <Link
-                    href={`/dashboard/customers/${order.customer.id}`}
-                    className="text-sm text-green-600 hover:text-green-700"
-                  >
-                    View Profile
-                  </Link>
+                  {/* {order.customer.id && (
+                    <Link
+                      href={`/dashboard/customers/${order.customer.id}`}
+                      className="text-sm text-green-600 hover:text-green-700"
+                    >
+                      View Profile
+                    </Link>
+                  )} */}
                 </div>
               </div>
               
@@ -748,7 +718,7 @@ export default function ViewOrderPage({ params }) {
                 <h3 className="text-sm font-medium text-gray-700 mb-3">Actions</h3>
                 <div className="grid grid-cols-1 gap-3">
                   <Link
-                    href={`/dashboard/orders/edit/${id}`}
+                    href={`/dashboard/orders/edit/${order._id}`}
                     className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                   >
                     <FiEdit2 className="w-4 h-4 mr-2" />
@@ -787,20 +757,35 @@ export default function ViewOrderPage({ params }) {
               <div className="relative p-6">
                 {/* Timeline */}
                 <div className="ml-6 border-l-2 border-gray-200">
-                  {order.timeline.map((event, index) => (
-                    <div key={index} className="relative mb-8 ml-6">
+                  {order.timeline && order.timeline.length > 0 ? (
+                    order.timeline.map((event, index) => (
+                      <div key={`timeline-${index}`} className="relative mb-8 ml-6">
+                        <div className="absolute -left-8 mt-1.5 h-4 w-4 rounded-full border-2 border-white bg-gray-200">
+                          <div className={`h-full w-full rounded-full ${getStatusBadgeClass(event.status).replace('text-', 'bg-').replace('bg-', '')}`}></div>
+                        </div>
+                        <div className="mb-1 flex items-center">
+                          <span className={`mr-2 rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeClass(event.status)}`}>
+                            {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                          </span>
+                          <time className="text-xs text-gray-500">{formatDate(event.date)}</time>
+                        </div>
+                        <p className="text-sm text-gray-700">{event.note}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="relative mb-8 ml-6">
                       <div className="absolute -left-8 mt-1.5 h-4 w-4 rounded-full border-2 border-white bg-gray-200">
-                        <div className={`h-full w-full rounded-full ${getStatusBadgeClass(event.status).replace('text-', 'bg-').replace('bg-', '')}`}></div>
+                        <div className="h-full w-full rounded-full bg-yellow-800"></div>
                       </div>
                       <div className="mb-1 flex items-center">
-                        <span className={`mr-2 rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeClass(event.status)}`}>
-                          {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                        <span className="mr-2 rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800">
+                          Created
                         </span>
-                        <time className="text-xs text-gray-500">{formatDate(event.date)}</time>
+                        <time className="text-xs text-gray-500">{formatDate(order.date)}</time>
                       </div>
-                      <p className="text-sm text-gray-700">{event.note}</p>
+                      <p className="text-sm text-gray-700">Order was created</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -847,6 +832,20 @@ export default function ViewOrderPage({ params }) {
               </div>
             )}
             
+            {order.status === 'packed' && (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mt-4">
+                <div className="flex items-start">
+                  <FiPackage className="h-5 w-5 text-indigo-600 mr-3 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-indigo-800">Order Packed</h3>
+                    <p className="text-sm text-indigo-700 mt-1">
+                      This order has been packed and is ready for shipping.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {order.status === 'shipped' && (
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mt-4">
                 <div className="flex items-start">
@@ -860,9 +859,39 @@ export default function ViewOrderPage({ params }) {
                 </div>
               </div>
             )}
+            
+            {order.status === 'returned' && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mt-4">
+                <div className="flex items-start">
+                  <FiAlertTriangle className="h-5 w-5 text-orange-600 mr-3 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-orange-800">Order Returned</h3>
+                    <p className="text-sm text-orange-700 mt-1">
+                      This order has been returned by the customer.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Update Order Status Section */}
+            {order.status !== 'delivered' && order.status !== 'cancelled' && order.status !== 'returned' && (
+              <div className="mt-6 border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Update Order Status</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Link
+                    href={`/dashboard/orders/edit/${order._id}`}
+                    className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    <FiEdit2 className="w-4 h-4 mr-2" />
+                    Edit Order Details
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
   );
-}
+} 
