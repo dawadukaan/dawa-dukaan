@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   FiSearch, FiFilter, FiEye, FiDownload, 
-  FiCalendar, FiChevronDown, FiChevronUp, FiX, FiPlus 
+  FiCalendar, FiChevronDown, FiChevronUp, FiX, FiPlus, FiEdit2, FiTrash2 
 } from 'react-icons/fi';
 import { getCookie } from 'cookies-next';
 import env from '@/lib/config/env';
@@ -32,6 +32,8 @@ export default function OrdersPage() {
     key: 'createdAt',
     direction: 'desc'
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   // Fetch orders data
   useEffect(() => {
@@ -215,6 +217,57 @@ export default function OrdersPage() {
   // View order details
   const handleViewOrder = (orderId) => {
     router.push(`/dashboard/orders/view/${orderId}`);
+  };
+
+  // Edit order
+  const handleEditOrder = (orderId) => {
+    router.push(`/dashboard/orders/edit/${orderId}`);
+  };
+
+  // Delete order
+  const handleDeleteOrder = async (orderId) => {
+    setOrderToDelete(orderId);
+    setShowDeleteModal(true);
+  };
+
+  // Confirm delete order
+  const confirmDeleteOrder = async () => {
+    try {
+      const response = await fetch(`${env.app.apiUrl}/admin/orders/${orderToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Remove the deleted order from the state
+        setOrders(orders.filter(order => order._id !== orderToDelete));
+        setShowDeleteModal(false);
+        setOrderToDelete(null);
+        
+        // Show success message
+        alert('Order deleted successfully');
+      } else {
+        setShowDeleteModal(false);
+        setOrderToDelete(null);
+        alert(`Failed to delete order: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      setShowDeleteModal(false);
+      setOrderToDelete(null);
+      alert('Failed to delete order. Please try again.');
+    }
+  };
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setOrderToDelete(null);
   };
 
   // Export orders as CSV
@@ -487,13 +540,29 @@ export default function OrdersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleViewOrder(order._id)}
-                        className="text-green-600 hover:text-green-900 flex items-center justify-end"
-                      >
-                        <FiEye className="w-4 h-4 mr-1" />
-                        View
-                      </button>
+                      <div className="flex items-center justify-end space-x-3">
+                        <button
+                          onClick={() => handleViewOrder(order._id)}
+                          className="text-blue-600 hover:text-blue-900 flex items-center"
+                          title="View Order"
+                        >
+                          <FiEye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEditOrder(order._id)}
+                          className="text-green-600 hover:text-green-900 flex items-center"
+                          title="Edit Order"
+                        >
+                          <FiEdit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteOrder(order._id)}
+                          className="text-red-600 hover:text-red-900 flex items-center"
+                          title="Delete Order"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -531,6 +600,39 @@ export default function OrdersPage() {
           </p>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <FiTrash2 className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Order</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to delete this order? This action cannot be undone and all data associated with this order will be permanently removed.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={cancelDelete}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteOrder}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Delete Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,16 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { 
   FiTrash2, 
   FiSearch, 
-  FiFilter, 
-  FiCheck,
   FiX,
-  FiMoreVertical,
   FiCheckCircle,
-  FiXCircle,
   FiAlertCircle,
   FiInfo,
   FiMessageCircle,
@@ -20,12 +15,14 @@ import {
   FiUser,
   FiCalendar,
   FiClock,
-  FiRefreshCw,
   FiEye,
   FiEyeOff,
-  FiBell
+  FiBell,
+  FiAlertTriangle
 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
+import { getCookie } from 'cookies-next';
+import env from '@/lib/config/env';
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -41,6 +38,14 @@ export default function NotificationsPage() {
   const [showSendModal, setShowSendModal] = useState(false);
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [selectedUser, setSelectedUser] = useState('');
+  const [users, setUsers] = useState([]);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const token = getCookie('token');
 
   // New notification form state
   const [newNotification, setNewNotification] = useState({
@@ -52,119 +57,84 @@ export default function NotificationsPage() {
     sendNow: true
   });
 
+  // Define fetchNotifications at the component level so it can be called from multiple places
+  const fetchNotifications = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch real notifications from the API
+      const response = await fetch(`${env.app.apiUrl}/admin/notifications`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch notifications');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.data)) {
+        setNotifications(data.data);
+      } else if (data.success && data.data && Array.isArray(data.data.notifications)) {
+        // Handle case where notifications are nested in data.data.notifications
+        setNotifications(data.data.notifications);
+      } else {
+        console.warn('Unexpected API response format:', data);
+        setNotifications([]); // Set to empty array if data format is unexpected
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      toast.error('Failed to load notifications');
+      
+      // Fallback to empty array if API fails
+      setNotifications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Fetch notifications data
   useEffect(() => {
-    const fetchNotifications = async () => {
+    fetchNotifications();
+  }, [token]);
+
+  // Fetch users
+  useEffect(() => {
+    const fetchUsers = async () => {
       try {
         setIsLoading(true);
         
-        // Simulating API call with sample data
-        setTimeout(() => {
-          const sampleNotifications = [
-            {
-              id: '1',
-              title: 'System Maintenance',
-              message: 'The system will be down for maintenance on Sunday, July 10th from 2:00 AM to 4:00 AM.',
-              type: 'system',
-              status: 'sent',
-              recipients: 'all',
-              recipientCount: 1250,
-              readCount: 875,
-              createdAt: '2023-07-05T10:30:00Z',
-              sentAt: '2023-07-05T10:30:00Z',
-              scheduledFor: null,
-              sender: {
-                id: '1',
-                name: 'System Admin',
-                avatar: 'https://source.unsplash.com/random/100x100/?admin'
-              }
-            },
-            {
-              id: '2',
-              title: 'New Feature: Dark Mode',
-              message: 'We\'ve added a new dark mode feature. Try it out by clicking on your profile and selecting "Appearance".',
-              type: 'feature',
-              status: 'sent',
-              recipients: 'users',
-              recipientCount: 950,
-              readCount: 423,
-              createdAt: '2023-07-03T14:45:00Z',
-              sentAt: '2023-07-03T14:45:00Z',
-              scheduledFor: null,
-              sender: {
-                id: '1',
-                name: 'System Admin',
-                avatar: 'https://source.unsplash.com/random/100x100/?admin'
-              }
-            },
-            {
-              id: '3',
-              title: 'Special Discount for Vendors',
-              message: 'All vendors can now enjoy a 10% reduction in commission rates for the next month.',
-              type: 'promotion',
-              status: 'sent',
-              recipients: 'vendors',
-              recipientCount: 120,
-              readCount: 98,
-              createdAt: '2023-07-01T09:15:00Z',
-              sentAt: '2023-07-01T09:15:00Z',
-              scheduledFor: null,
-              sender: {
-                id: '2',
-                name: 'Marketing Team',
-                avatar: 'https://source.unsplash.com/random/100x100/?marketing'
-              }
-            },
-            {
-              id: '4',
-              title: 'Service Provider Training',
-              message: 'Join our online training session for service providers on July 15th at 3:00 PM.',
-              type: 'event',
-              status: 'scheduled',
-              recipients: 'providers',
-              recipientCount: 85,
-              readCount: 0,
-              createdAt: '2023-07-08T11:20:00Z',
-              sentAt: null,
-              scheduledFor: '2023-07-12T09:00:00Z',
-              sender: {
-                id: '3',
-                name: 'Training Department',
-                avatar: 'https://source.unsplash.com/random/100x100/?training'
-              }
-            },
-            {
-              id: '5',
-              title: 'Security Alert',
-              message: 'We\'ve detected unusual login attempts. Please ensure your password is strong and consider enabling two-factor authentication.',
-              type: 'alert',
-              status: 'draft',
-              recipients: 'all',
-              recipientCount: 0,
-              readCount: 0,
-              createdAt: '2023-07-09T16:30:00Z',
-              sentAt: null,
-              scheduledFor: null,
-              sender: {
-                id: '4',
-                name: 'Security Team',
-                avatar: 'https://source.unsplash.com/random/100x100/?security'
-              }
-            }
-          ];
-          
-          setNotifications(sampleNotifications);
-          setIsLoading(false);
-        }, 1000);
+        const response = await fetch(`${env.app.apiUrl}/admin/users`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          setUsers(data.data);
+        } else {
+          throw new Error(data.message || 'Failed to fetch users');
+        }
       } catch (error) {
-        console.error('Error fetching notifications:', error);
-        toast.error('Failed to load notifications');
+        console.error('Error fetching users:', error);
+        setError(error.message);
+      } finally {
         setIsLoading(false);
       }
     };
-
-    fetchNotifications();
-  }, []);
+    
+    fetchUsers();
+  }, [token]);
 
   // Helper functions
   const formatDate = (dateString) => {
@@ -297,16 +267,18 @@ export default function NotificationsPage() {
   };
 
   // Filter notifications
-  const filteredNotifications = notifications.filter(notification => {
-    const matchesSearch = 
-      notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notification.message.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesType = typeFilter === 'all' || notification.type === typeFilter;
-    const matchesStatus = statusFilter === 'all' || notification.status === statusFilter;
-    
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  const filteredNotifications = Array.isArray(notifications) 
+    ? notifications.filter(notification => {
+        const matchesSearch = 
+          notification.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          notification.body?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesType = typeFilter === 'all' || notification.type === typeFilter;
+        const matchesStatus = statusFilter === 'all' || notification.status === statusFilter;
+        
+        return matchesSearch && matchesType && matchesStatus;
+      })
+    : [];
 
   // Sort notifications
   const sortedNotifications = [...filteredNotifications].sort((a, b) => {
@@ -314,23 +286,23 @@ export default function NotificationsPage() {
     
     switch (sortBy) {
       case 'date':
-        const dateA = a.sentAt || a.scheduledFor || a.createdAt;
-        const dateB = b.sentAt || b.scheduledFor || b.createdAt;
-        comparison = new Date(dateA) - new Date(dateB);
+        const dateA = a.createdAt || a.scheduledFor || a.sentAt;
+        const dateB = b.createdAt || b.scheduledFor || b.sentAt;
+        comparison = new Date(dateA || 0) - new Date(dateB || 0);
         break;
       case 'title':
-        comparison = a.title.localeCompare(b.title);
+        comparison = (a.title || '').localeCompare(b.title || '');
         break;
       case 'type':
-        comparison = a.type.localeCompare(b.type);
+        comparison = (a.type || '').localeCompare(b.type || '');
         break;
       case 'status':
-        comparison = a.status.localeCompare(b.status);
+        comparison = (a.status || '').localeCompare(b.status || '');
         break;
       default:
-        const defaultDateA = a.sentAt || a.scheduledFor || a.createdAt;
-        const defaultDateB = b.sentAt || b.scheduledFor || b.createdAt;
-        comparison = new Date(defaultDateA) - new Date(defaultDateB);
+        const defaultDateA = a.createdAt || a.scheduledFor || a.sentAt;
+        const defaultDateB = b.createdAt || b.scheduledFor || b.sentAt;
+        comparison = new Date(defaultDateA || 0) - new Date(defaultDateB || 0);
     }
     
     return sortOrder === 'asc' ? comparison : -comparison;
@@ -350,64 +322,135 @@ export default function NotificationsPage() {
     if (selectedNotifications.length === sortedNotifications.length) {
       setSelectedNotifications([]);
     } else {
-      setSelectedNotifications(sortedNotifications.map(notification => notification.id));
+      setSelectedNotifications(sortedNotifications.map(notification => notification._id));
     }
   };
 
   // Handle delete confirmation
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedNotifications.length > 0) {
-      // In a real app, you would call your API to delete the notifications
-      setNotifications(prev => prev.filter(notification => !selectedNotifications.includes(notification.id)));
-      setSelectedNotifications([]);
-      toast.success(`${selectedNotifications.length} notifications deleted successfully`);
+      setIsLoading(true);
+      
+      try {
+        // Delete each selected notification
+        const deletePromises = selectedNotifications.map(notificationId => 
+          fetch(`${env.app.apiUrl}/admin/notifications/${notificationId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          })
+        );
+        
+        await Promise.all(deletePromises);
+        
+        // Update the notifications list
+        setNotifications(prev => prev.filter(notification => !selectedNotifications.includes(notification._id)));
+        setSelectedNotifications([]);
+        toast.success(`${selectedNotifications.length} notifications deleted successfully`);
+      } catch (error) {
+        console.error('Error deleting notifications:', error);
+        toast.error('Failed to delete some notifications');
+      } finally {
+        setIsLoading(false);
+      }
+      
+      setShowDeleteModal(false);
     }
-    
-    setShowDeleteModal(false);
   };
 
   // Handle send notification
-  const handleSendNotification = () => {
-    // Validate form
-    if (!newNotification.title || !newNotification.message) {
-      toast.error('Please fill all required fields');
+  const handleSendNotification = async (e) => {
+    e.preventDefault();
+    
+    if (!title || !body) {
+      setError('Title and body are required');
       return;
     }
     
-    // In a real app, you would call your API to send the notification
-    const newId = (notifications.length + 1).toString();
-    const now = new Date().toISOString();
+    setIsSending(true);
+    setError(null);
+    setSuccess(null);
     
-    const newNotificationData = {
-      ...newNotification,
-      id: newId,
-      status: newNotification.sendNow ? 'sent' : 'scheduled',
-      recipientCount: newNotification.recipients === 'all' ? 1250 : 
-                      newNotification.recipients === 'users' ? 950 : 
-                      newNotification.recipients === 'vendors' ? 120 : 85,
-      readCount: 0,
-      createdAt: now,
-      sentAt: newNotification.sendNow ? now : null,
-      scheduledFor: newNotification.sendNow ? null : newNotification.scheduledFor,
-      sender: {
-        id: '1',
-        name: 'System Admin',
-        avatar: 'https://source.unsplash.com/random/100x100/?admin'
+    try {
+      const payload = {
+        title,
+        body,
+        data: {
+          url: '/notifications',
+          timestamp: new Date().toISOString(),
+        }
+      };
+      
+      // Add userId if sending to specific user
+      if (selectedUser) {
+        payload.userId = selectedUser;
       }
-    };
-    
-    setNotifications(prev => [...prev, newNotificationData]);
-    setShowSendModal(false);
-    setNewNotification({
-      title: '',
-      message: '',
-      type: 'info',
-      recipients: 'all',
-      scheduledFor: '',
-      sendNow: true
-    });
-    
-    toast.success(newNotification.sendNow ? 'Notification sent successfully' : 'Notification scheduled successfully');
+      
+      console.log('Sending notification with payload:', payload);
+      
+      const response = await fetch(`${env.app.apiUrl}/admin/notifications/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await response.json();
+      console.log('Notification API response:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Failed to send notification');
+      }
+      
+      setSuccess(`Notification sent successfully!${data.data?.success ? ` (Success: ${data.data.success}, Failure: ${data.data.failure || 0})` : ''}`);
+      
+      // Reset form
+      setTitle('');
+      setBody('');
+      setSelectedUser('');
+      
+      // Close modal after successful send
+      setTimeout(() => {
+        setShowSendModal(false);
+        // Refresh notifications list
+        fetchNotifications();
+      }, 2000);
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      setError(error.message || 'An error occurred while sending the notification');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // Add a function to handle notification deletion
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      const response = await fetch(`${env.app.apiUrl}/admin/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete notification');
+      }
+      
+      // Update the notifications list
+      setNotifications(prev => prev.filter(notification => notification._id !== notificationId));
+      toast.success('Notification deleted successfully');
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      toast.error(error.message || 'Failed to delete notification');
+    }
   };
 
   return (
@@ -430,7 +473,7 @@ export default function NotificationsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Notifications</p>
-              <h3 className="text-2xl font-bold text-gray-900">{notifications.length}</h3>
+              <h3 className="text-2xl font-bold text-gray-900">{Array.isArray(notifications) ? notifications.length : 0}</h3>
             </div>
             <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
               <FiBell className="w-6 h-6" />
@@ -443,7 +486,7 @@ export default function NotificationsPage() {
             <div>
               <p className="text-sm text-gray-500">Sent</p>
               <h3 className="text-2xl font-bold text-gray-900">
-                {notifications.filter(notification => notification.status === 'sent').length}
+                {Array.isArray(notifications) ? notifications.filter(notification => notification.status === 'sent').length : 0}
               </h3>
             </div>
             <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
@@ -457,7 +500,7 @@ export default function NotificationsPage() {
             <div>
               <p className="text-sm text-gray-500">Scheduled</p>
               <h3 className="text-2xl font-bold text-gray-900">
-                {notifications.filter(notification => notification.status === 'scheduled').length}
+                {Array.isArray(notifications) ? notifications.filter(notification => notification.status === 'scheduled').length : 0}
               </h3>
             </div>
             <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600">
@@ -471,10 +514,10 @@ export default function NotificationsPage() {
             <div>
               <p className="text-sm text-gray-500">Read Rate</p>
               <h3 className="text-2xl font-bold text-gray-900">
-                {Math.round(
+                {Array.isArray(notifications) ? Math.round(
                   (notifications.reduce((sum, notification) => sum + (notification.readCount || 0), 0) / 
                   Math.max(1, notifications.reduce((sum, notification) => sum + (notification.recipientCount || 0), 0))) * 100
-                )}%
+                ) : 0}%
               </h3>
             </div>
             <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600">
@@ -604,83 +647,63 @@ export default function NotificationsPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {sortedNotifications.map((notification) => (
-                  <tr key={notification.id} className="hover:bg-gray-50">
+                  <tr key={notification._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input 
                         type="checkbox" 
                         className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4"
-                        checked={selectedNotifications.includes(notification.id)}
-                        onChange={() => toggleNotificationSelection(notification.id)}
+                        checked={selectedNotifications.includes(notification._id)}
+                        onChange={() => toggleNotificationSelection(notification._id)}
                       />
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-start">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          <Image
-                            src={notification.sender.avatar}
-                            alt={notification.sender.name}
-                            width={40}
-                            height={40}
-                            className="rounded-full object-cover"
-                          />
+                        <div className="h-10 w-10 flex-shrink-0 bg-gray-200 rounded-full flex items-center justify-center">
+                          {getTypeIcon(notification.type || 'info')}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">{notification.title}</div>
-                          <div className="text-sm text-gray-500 line-clamp-1">{notification.message}</div>
+                          <div className="text-sm text-gray-500 line-clamp-1">{notification.body}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {getTypeIcon(notification.type)}
-                        <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(notification.type)}`}>
-                          {getTypeLabel(notification.type)}
+                        {getTypeIcon(notification.type || 'info')}
+                        <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(notification.type || 'info')}`}>
+                          {getTypeLabel(notification.type || 'info')}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {getRecipientIcon(notification.recipients)}
-                        <span className="ml-2 text-sm text-gray-900">{getRecipientLabel(notification.recipients)}</span>
-                      </div>
-                      {notification.recipientCount > 0 && (
-                        <div className="text-xs text-gray-500">{notification.recipientCount} recipients</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {notification.status === 'sent' && (
-                        <div className="text-sm text-gray-900">Sent: {formatDate(notification.sentAt)}</div>
-                      )}
-                      {notification.status === 'scheduled' && (
-                        <div className="text-sm text-gray-900">Scheduled: {formatDate(notification.scheduledFor)}</div>
-                      )}
-                      {notification.status === 'draft' && (
-                        <div className="text-sm text-gray-900">Created: {formatDate(notification.createdAt)}</div>
-                      )}
-                      <div className="text-xs text-gray-500">
-                        {notification.status === 'sent' && formatTime(notification.sentAt)}
-                        {notification.status === 'scheduled' && formatTime(notification.scheduledFor)}
-                        {notification.status === 'draft' && formatTime(notification.createdAt)}
+                        {notification.user ? (
+                          <>
+                            <FiUser className="w-5 h-5 text-blue-500" />
+                            <span className="ml-2 text-sm text-gray-900">Individual User</span>
+                          </>
+                        ) : (
+                          <>
+                            <FiUsers className="w-5 h-5 text-gray-500" />
+                            <span className="ml-2 text-sm text-gray-900">All Users</span>
+                          </>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(notification.status)}`}>
-                        {getStatusLabel(notification.status)}
+                      <div className="text-sm text-gray-900">Sent: {formatDate(notification.createdAt)}</div>
+                      <div className="text-xs text-gray-500">{formatTime(notification.createdAt)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${notification.read ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                        {notification.read ? 'Read' : 'Unread'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {notification.status === 'sent' ? (
-                        <div>
-                          <div className="text-sm text-gray-900">{notification.readCount} / {notification.recipientCount}</div>
-                          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                            <div 
-                              className="bg-blue-600 h-2.5 rounded-full" 
-                              style={{ width: `${Math.round((notification.readCount / notification.recipientCount) * 100)}%` }}
-                            ></div>
-                          </div>
-                        </div>
+                      {notification.read ? (
+                        <FiCheckCircle className="w-5 h-5 text-green-500" />
                       ) : (
-                        <span className="text-sm text-gray-500">-</span>
+                        <FiEyeOff className="w-5 h-5 text-gray-400" />
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -688,28 +711,13 @@ export default function NotificationsPage() {
                         <button
                           className="text-blue-600 hover:text-blue-900"
                           title="View Details"
+                          onClick={() => router.push(`/dashboard/notifications/${notification._id}`)}
                         >
                           <FiEye className="w-5 h-5" />
                         </button>
-                        {notification.status === 'draft' && (
-                          <button
-                            className="text-green-600 hover:text-green-900"
-                            title="Send Now"
-                          >
-                            <FiSend className="w-5 h-5" />
-                          </button>
-                        )}
-                        {notification.status === 'scheduled' && (
-                          <button
-                            className="text-purple-600 hover:text-purple-900"
-                            title="Reschedule"
-                          >
-                            <FiClock className="w-5 h-5" />
-                          </button>
-                        )}
                         <button
                           onClick={() => {
-                            setSelectedNotifications([notification.id]);
+                            setSelectedNotifications([notification._id]);
                             setShowDeleteModal(true);
                           }}
                           className="text-red-600 hover:text-red-900"
@@ -789,7 +797,7 @@ export default function NotificationsPage() {
 
       {/* Send Notification Modal */}
       {showSendModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-medium text-gray-900">Send New Notification</h3>
@@ -802,117 +810,127 @@ export default function NotificationsPage() {
             </div>
             
             <div className="space-y-4">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  placeholder="Enter notification title"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={newNotification.title}
-                  onChange={(e) => setNewNotification(prev => ({ ...prev, title: e.target.value }))}
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                  Message <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="message"
-                  rows="4"
-                  placeholder="Enter notification message"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={newNotification.message}
-                  onChange={(e) => setNewNotification(prev => ({ ...prev, message: e.target.value }))}
-                ></textarea>
-              </div>
-              
-              <div>
-                <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-                  Notification Type
-                </label>
-                <select
-                  id="type"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={newNotification.type}
-                  onChange={(e) => setNewNotification(prev => ({ ...prev, type: e.target.value }))}
-                >
-                  <option value="system">System</option>
-                  <option value="feature">Feature Update</option>
-                  <option value="promotion">Promotion</option>
-                  <option value="event">Event</option>
-                  <option value="alert">Alert</option>
-                </select>
-              </div>
-              
-              <div>
-                <label htmlFor="recipients" className="block text-sm font-medium text-gray-700 mb-1">
-                  Recipients
-                </label>
-                <select
-                  id="recipients"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={newNotification.recipients}
-                  onChange={(e) => setNewNotification(prev => ({ ...prev, recipients: e.target.value }))}
-                >
-                  <option value="all">All Users</option>
-                  <option value="users">Customers Only</option>
-                  <option value="vendors">Vendors Only</option>
-                  <option value="providers">Service Providers Only</option>
-                </select>
-              </div>
-              
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="sendNow"
-                  className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 mr-2"
-                  checked={newNotification.sendNow}
-                  onChange={(e) => setNewNotification(prev => ({ ...prev, sendNow: e.target.checked }))}
-                />
-                <label htmlFor="sendNow" className="text-sm font-medium text-gray-700">
-                  Send immediately
-                </label>
-              </div>
-              
-              {!newNotification.sendNow && (
-                <div>
-                  <label htmlFor="scheduledFor" className="block text-sm font-medium text-gray-700 mb-1">
-                    Schedule Date and Time <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="datetime-local"
-                    id="scheduledFor"
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={newNotification.scheduledFor}
-                    onChange={(e) => setNewNotification(prev => ({ ...prev, scheduledFor: e.target.value }))}
-                  />
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
+                  <FiAlertTriangle className="h-5 w-5 text-red-400 mr-2 mt-0.5" />
+                  <span>{error}</span>
                 </div>
               )}
               
-              <div className="pt-4 flex justify-end gap-3">
+              {success && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                  {success}
+                </div>
+              )}
+              
+              <div>
+                <label htmlFor="recipient" className="block text-sm font-medium text-gray-700 mb-1">
+                  Recipient
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center">
+                    <input
+                      id="all-users"
+                      name="recipient"
+                      type="radio"
+                      checked={!selectedUser}
+                      onChange={() => setSelectedUser('')}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="all-users" className="ml-2 block text-sm text-gray-700 flex items-center">
+                      <FiUsers className="mr-1" /> All Users
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      id="specific-user"
+                      name="recipient"
+                      type="radio"
+                      checked={!!selectedUser}
+                      onChange={() => setSelectedUser(users[0]?._id || '')}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="specific-user" className="ml-2 block text-sm text-gray-700 flex items-center">
+                      <FiUser className="mr-1" /> Specific User
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              {selectedUser && (
+                <div>
+                  <label htmlFor="user" className="block text-sm font-medium text-gray-700 mb-1">
+                    Select User
+                  </label>
+                  <select
+                    id="user"
+                    value={selectedUser}
+                    onChange={(e) => setSelectedUser(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <option>Loading users...</option>
+                    ) : (
+                      users.map((user) => (
+                        <option key={user._id} value={user._id}>
+                          {user.name} ({user.email})
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              )}
+              
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                  Notification Title
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Enter notification title"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="body" className="block text-sm font-medium text-gray-700 mb-1">
+                  Notification Body
+                </label>
+                <textarea
+                  id="body"
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  rows="4"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Enter notification message"
+                  required
+                />
+              </div>
+              
+              <div className="flex justify-end">
                 <button
-                  onClick={() => setShowSendModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
+                  type="submit"
                   onClick={handleSendNotification}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                  disabled={isSending}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center disabled:opacity-50"
                 >
-                  {newNotification.sendNow ? (
+                  {isSending ? (
                     <>
-                      <FiSend className="w-4 h-4 mr-2" />
-                      Send Now
+                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
                     </>
                   ) : (
                     <>
-                      <FiClock className="w-4 h-4 mr-2" />
-                      Schedule
+                      <FiSend className="w-5 h-5 mr-2" />
+                      Send Notification
                     </>
                   )}
                 </button>

@@ -5,11 +5,12 @@ import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
 import { StatsSummary } from '@/components/dashboard/sections/StatsSummary';
 import { RevenueChart } from '@/components/dashboard/sections/RevenueChart';
 import { ProductsChart } from '@/components/dashboard/sections/ProductsChart';
+import { CustomerGrowthChart } from '@/components/dashboard/sections/CustomerGrowthChart';
 import { RecentOrders } from '@/components/dashboard/sections/RecentOrders';
 
 export default function DashboardPage() {
   const [dateRange, setDateRange] = useState('today');
-  const { stats, recentOrders, revenueData, productsData, loading } = useDashboardData(dateRange);
+  const { stats, recentOrders, revenueData, productsData, customerData, loading } = useDashboardData(dateRange);
 
   return (
     <div className="space-y-6">
@@ -37,8 +38,11 @@ export default function DashboardPage() {
         <ProductsChart data={productsData} isLoading={loading} />
       </div>
 
+      {/* Additional Chart */}
+      <CustomerGrowthChart data={customerData} isLoading={loading} />
+
       {/* Recent Orders */}
-      <RecentOrders orders={recentOrders} isLoading={loading} />
+      {/* <RecentOrders orders={recentOrders} isLoading={loading} /> */}
     </div>
   );
 }

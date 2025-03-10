@@ -51,6 +51,12 @@ const OrderSchema = new mongoose.Schema({
     required: true,
     enum: ['COD', 'PhonePe', 'Razorpay'],
   },
+  paymentStatus: {
+    type: String,
+    required: true,
+    enum: ['Pending', 'Paid', 'Refunded', 'Failed'],
+    default: 'Pending',
+  },
   paymentResult: {
     id: { type: String },
     status: { type: String },
@@ -96,13 +102,13 @@ const OrderSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: ['Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
-    default: 'Processing',
+    enum: ['Pending', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
+    default: 'Pending',
   },
   statusHistory: [{
     status: {
       type: String,
-      enum: ['Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
+      enum: ['Pending', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
     },
     timestamp: {
       type: Date,
