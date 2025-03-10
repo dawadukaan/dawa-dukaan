@@ -48,7 +48,7 @@ export function useDashboardData(dateRange = 'today') {
           throw new Error(result.message || 'Failed to fetch dashboard data');
         }
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        //console.error('Error fetching dashboard data:', error);
         
         // Fallback to sample data if API fails
         setData({
