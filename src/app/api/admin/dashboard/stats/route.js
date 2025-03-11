@@ -20,25 +20,57 @@ export async function GET(request) {
       return errorResponse("You don't have permission to view analytics", 403);
     }
     
-    // Get total sales
-    const totalSales = await Order.aggregate([
-      { $match: { status: { $nin: ['Cancelled', 'Returned'] } } },
+    // Parse query parameters
+    const url = new URL(request.url);
+    const range = url.searchParams.get('range') || 'today';
+    
+    // Calculate date ranges
+    const { currentStart, currentEnd, previousStart, previousEnd } = getDateRanges(range);
+    
+    // Get total sales for current period
+    const currentSales = await Order.aggregate([
+      { 
+        $match: { 
+          createdAt: { $gte: currentStart, $lte: currentEnd },
+          status: { $nin: ['Cancelled', 'Returned'] } 
+        } 
+      },
       { $group: { _id: null, total: { $sum: '$totalPrice' } } }
     ]);
     
-    // Get total orders
-    const totalOrders = await Order.countDocuments();
-    
-    // Get orders by status
-    const ordersByStatus = await Order.aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } }
+    // Get total sales for previous period
+    const previousSales = await Order.aggregate([
+      { 
+        $match: { 
+          createdAt: { $gte: previousStart, $lte: previousEnd },
+          status: { $nin: ['Cancelled', 'Returned'] } 
+        } 
+      },
+      { $group: { _id: null, total: { $sum: '$totalPrice' } } }
     ]);
+    
+    // Get total orders for current period
+    const currentOrders = await Order.countDocuments({
+      createdAt: { $gte: currentStart, $lte: currentEnd }
+    });
+    
+    // Get total orders for previous period
+    const previousOrders = await Order.countDocuments({
+      createdAt: { $gte: previousStart, $lte: previousEnd }
+    });
+    
+    // Get total users for current period
+    const currentUsers = await User.countDocuments({
+      createdAt: { $lte: currentEnd }
+    });
+    
+    // Get total users for previous period
+    const previousUsers = await User.countDocuments({
+      createdAt: { $lte: previousEnd }
+    });
     
     // Get low stock products
     const lowStockProducts = await Product.countDocuments({ stock: { $lt: 10 } });
-    
-    // Get total users
-    const totalUsers = await User.countDocuments();
     
     // Get recent orders
     const recentOrders = await Order.find()
@@ -46,15 +78,11 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .limit(5);
     
-    // Get sales by date (last 7 days)
-    const today = new Date();
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(today.getDate() - 7);
-    
+    // Get sales by date for the current period
     const salesByDate = await Order.aggregate([
       { 
         $match: { 
-          createdAt: { $gte: sevenDaysAgo },
+          createdAt: { $gte: currentStart, $lte: currentEnd },
           status: { $nin: ['Cancelled', 'Returned'] }
         } 
       },
@@ -68,20 +96,139 @@ export async function GET(request) {
       { $sort: { _id: 1 } }
     ]);
     
+    // Get top selling products
+    const topProducts = await Order.aggregate([
+      { $match: { status: { $nin: ['Cancelled', 'Returned'] } } },
+      { $unwind: '$orderItems' },
+      {
+        $group: {
+          _id: '$orderItems.product',
+          name: { $first: '$orderItems.name' },
+          totalSold: { $sum: '$orderItems.quantity' }
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 5 }
+    ]);
+    
+    // Get customer growth by month
+    const customerGrowth = await User.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+          new: { $sum: 1 }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          pipeline: [
+            { $match: { lastLogin: { $exists: true } } },
+            {
+              $group: {
+                _id: { $dateToString: { format: '%Y-%m', date: '$lastLogin' } },
+                active: { $sum: 1 }
+              }
+            }
+          ],
+          as: 'activeUsers'
+        }
+      },
+      {
+        $addFields: {
+          active: {
+            $ifNull: [
+              { $arrayElemAt: ['$activeUsers.active', 0] },
+              0
+            ]
+          }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 6 }
+    ]);
+    
     return successResponse({
-      totalSales: totalSales.length > 0 ? totalSales[0].total : 0,
-      totalOrders,
-      ordersByStatus: ordersByStatus.reduce((acc, curr) => {
-        acc[curr._id] = curr.count;
-        return acc;
-      }, {}),
+      totalSales: currentSales.length > 0 ? currentSales[0].total : 0,
+      totalOrders: currentOrders,
       lowStockProducts,
-      totalUsers,
+      totalUsers: currentUsers,
       recentOrders,
-      salesByDate
+      salesByDate,
+      topProducts,
+      customerGrowth,
+      salesComparison: {
+        currentPeriod: currentSales.length > 0 ? currentSales[0].total : 0,
+        previousPeriod: previousSales.length > 0 ? previousSales[0].total : 0
+      },
+      ordersComparison: {
+        currentPeriod: currentOrders,
+        previousPeriod: previousOrders
+      },
+      usersComparison: {
+        currentPeriod: currentUsers,
+        previousPeriod: previousUsers
+      }
     });
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
     return errorResponse("Failed to fetch dashboard stats", 500);
   }
+}
+
+// Helper function to calculate date ranges based on selected range
+function getDateRanges(range) {
+  const now = new Date();
+  let currentStart, currentEnd, previousStart, previousEnd;
+  
+  switch (range) {
+    case 'today':
+      currentStart = new Date(now.setHours(0, 0, 0, 0));
+      currentEnd = new Date();
+      previousStart = new Date(now);
+      previousStart.setDate(previousStart.getDate() - 1);
+      previousStart.setHours(0, 0, 0, 0);
+      previousEnd = new Date(now);
+      previousEnd.setDate(previousEnd.getDate() - 1);
+      previousEnd.setHours(23, 59, 59, 999);
+      break;
+      
+    case 'week':
+      currentStart = new Date(now);
+      currentStart.setDate(currentStart.getDate() - currentStart.getDay());
+      currentStart.setHours(0, 0, 0, 0);
+      currentEnd = new Date();
+      previousStart = new Date(currentStart);
+      previousStart.setDate(previousStart.getDate() - 7);
+      previousEnd = new Date(currentStart);
+      previousEnd.setDate(previousEnd.getDate() - 1);
+      previousEnd.setHours(23, 59, 59, 999);
+      break;
+      
+    case 'month':
+      currentStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      currentEnd = new Date();
+      previousStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      previousEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+      break;
+      
+    case 'year':
+      currentStart = new Date(now.getFullYear(), 0, 1);
+      currentEnd = new Date();
+      previousStart = new Date(now.getFullYear() - 1, 0, 1);
+      previousEnd = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
+      break;
+      
+    default:
+      currentStart = new Date(now.setHours(0, 0, 0, 0));
+      currentEnd = new Date();
+      previousStart = new Date(now);
+      previousStart.setDate(previousStart.getDate() - 1);
+      previousStart.setHours(0, 0, 0, 0);
+      previousEnd = new Date(now);
+      previousEnd.setDate(previousEnd.getDate() - 1);
+      previousEnd.setHours(23, 59, 59, 999);
+  }
+  
+  return { currentStart, currentEnd, previousStart, previousEnd };
 }
