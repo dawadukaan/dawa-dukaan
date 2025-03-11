@@ -1,24 +1,40 @@
-// src/app/api/products/route.js
+// src/app/api/user/products/route.js
 import dbConnect from "@/lib/db/connect";
 import Product from "@/lib/db/models/Product";
 import { successResponse, errorResponse } from "@/lib/api/apiResponse";
 import { authenticateUser } from "@/lib/api/authMiddleware";
 
-// GET /api/products - Public with user role detection
+// GET /api/user/products
 export async function GET(request) {
   try {
     await dbConnect();
     
-    // Authenticate user to determine if they are licensed or not
-    const { authenticated, session } = await authenticateUser(request, false); // false means don't require auth
-    const isLicensed = authenticated && session?.user?.type === 'licensee';
+    // Authenticate user
+    const { authenticated, session, response } = await authenticateUser(request, true);
+    
+    if (!authenticated) {
+      return response;
+    }
     
     const { searchParams } = new URL(request.url);
     
-    // Build query
+    // Get userType from query params (optional)
+    const userTypeParam = searchParams.get('userType');
+    
+    // Determine pricing display based on userType parameter
+    let isLicensed = false;
+    
+    if (userTypeParam) {
+      isLicensed = userTypeParam === 'licensee';
+    } else {
+      // If no userType specified, use the user's actual type
+      isLicensed = session?.user?.type === 'licensee';
+    }
+    
+    // Build query - always show all products regardless of user type
     const query = {
-      publishStatus: 'published', // Only show published products
-      stock: { $gt: 0 } // Only show in-stock products
+      publishStatus: 'published',
+      stock: { $gt: 0 }
     };
     
     // Filter by category
@@ -37,12 +53,6 @@ export async function GET(request) {
     const keyword = searchParams.get('keyword');
     if (keyword) {
       query.$text = { $search: keyword };
-    }
-    
-    // Filter by prescription requirement
-    // If user is not licensed, don't show prescription-required products
-    if (!isLicensed) {
-      query.prescriptionRequired = { $ne: true };
     }
     
     // Pagination
@@ -92,22 +102,37 @@ export async function GET(request) {
     
     const total = await Product.countDocuments(query);
     
-    // Transform products to include only relevant pricing based on user type
+    // Transform products to include pricing based on userType
     const transformedProducts = products.map(product => {
       const productObj = product.toObject();
       
-      // Add a userPrice field for convenience
-      productObj.userPrice = isLicensed 
-        ? productObj.price.licensedPrice 
-        : productObj.price.unlicensedPrice;
+      // Filter price fields based on user type
+      if (isLicensed) {
+        // For licensee users, only include licensee prices
+        productObj.price = { licensedPrice: productObj.price.licensedPrice };
+        
+        if (productObj.salePrice) {
+          productObj.salePrice = { licensedPrice: productObj.salePrice.licensedPrice };
+        }
+        
+        if (productObj.discountPercentage) {
+          productObj.discountPercentage = { licensedDiscount: productObj.discountPercentage.licensedDiscount };
+        }
+      } else {
+        // For unlicensed users, only include unlicensed prices
+        productObj.price = { unlicensedPrice: productObj.price.unlicensedPrice };
+        
+        if (productObj.salePrice) {
+          productObj.salePrice = { unlicensedPrice: productObj.salePrice.unlicensedPrice };
+        }
+        
+        if (productObj.discountPercentage) {
+          productObj.discountPercentage = { unlicensedDiscount: productObj.discountPercentage.unlicensedDiscount };
+        }
+      }
       
-      productObj.userSalePrice = isLicensed && productObj.salePrice?.licensedPrice
-        ? productObj.salePrice.licensedPrice
-        : productObj.salePrice?.unlicensedPrice || null;
-      
-      productObj.userDiscountPercentage = isLicensed && productObj.discountPercentage?.licensedDiscount
-        ? productObj.discountPercentage.licensedDiscount
-        : productObj.discountPercentage?.unlicensedDiscount || 0;
+      // Flag prescription-required products
+      productObj.requiresLicense = product.prescriptionRequired;
       
       return productObj;
     });
@@ -120,7 +145,7 @@ export async function GET(request) {
         limit,
         pages: Math.ceil(total / limit)
       },
-      userType: isLicensed ? 'licensee' : 'unlicensed'
+      userType: userTypeParam ? (isLicensed ? 'licensee' : 'unlicensed') : 'all'
     });
   } catch (error) {
     console.error("Error fetching products:", error);
