@@ -1,6 +1,7 @@
 // src/app/api/users/profile/route.js
 import dbConnect from "@/lib/db/connect";
 import User from "@/lib/db/models/User";
+import Address from "@/lib/db/models/Address";
 import { successResponse, errorResponse } from "@/lib/api/apiResponse";
 import { authenticateUser } from "@/lib/api/authMiddleware";
 
@@ -16,7 +17,8 @@ export async function GET(request) {
     
     const user = await User.findById(session.user.id)
       .select('-password')
-      .populate('defaultAddress');
+      .populate('defaultAddress')
+      .populate('addresses');
     
     if (!user) {
       return errorResponse("User not found", 404);
