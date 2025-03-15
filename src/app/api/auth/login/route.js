@@ -48,6 +48,7 @@ export async function POST(request) {
       id: user._id.toString(),
       email: user.email,
       name: user.name,
+      type: user.type,
       role: isAdmin ? user.role : 'customer',
       model: isAdmin ? 'AdminUser' : 'User',
       permissions: isAdmin ? user.permissions : null,
@@ -62,6 +63,7 @@ export async function POST(request) {
         name: user.name,
         email: user.email,
         role: isAdmin ? user.role : 'customer',
+        type: user.type,
       },
       token
     });

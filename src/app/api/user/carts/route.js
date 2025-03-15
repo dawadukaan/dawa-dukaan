@@ -96,13 +96,13 @@ export async function POST(request) {
       });
     }
     
-    // Calculate cart totals
-    await updateCartTotals(cart);
+    // Calculate cart totals with session
+    await updateCartTotals(cart, session);
     
     // Return updated cart with populated product details
     const updatedCart = await Cart.findById(cart._id).populate({
       path: 'items.product',
-      select: 'name price salePrice onSale images baseQuantity quantityUnit stock stockStatus'
+      select: 'name price salePrice onSale images baseQuantity quantityUnit stock stockStatus prescriptionRequired'
     });
     
     return successResponse({
@@ -165,8 +165,8 @@ export async function PUT(request) {
       cart.items[itemIndex].quantity = quantity;
     }
     
-    // Calculate cart totals
-    await updateCartTotals(cart);
+    // Calculate cart totals with session
+    await updateCartTotals(cart, session);
     
     // Return updated cart with populated product details
     const updatedCart = await Cart.findById(cart._id).populate({
@@ -220,8 +220,8 @@ export async function DELETE(request) {
       cart.items = [];
     }
     
-    // Calculate cart totals
-    await updateCartTotals(cart);
+    // Calculate cart totals with session
+    await updateCartTotals(cart, session);
     
     return successResponse({
       message: productId ? "Item removed from cart" : "Cart cleared",
@@ -234,7 +234,10 @@ export async function DELETE(request) {
 }
 
 // Helper function to update cart totals
-async function updateCartTotals(cart) {
+async function updateCartTotals(cart, session) {
+  // Determine if user is licensed
+  const isLicensed = session?.user?.type === 'licensee';
+  
   // Calculate total quantity
   cart.totalQuantity = cart.items.reduce((total, item) => total + item.quantity, 0);
   
@@ -248,8 +251,20 @@ async function updateCartTotals(cart) {
       const product = products.find(p => p._id.toString() === item.product.toString());
       if (!product) return total;
       
-      const price = product.onSale ? product.salePrice : product.price;
-      return total + (price * item.quantity);
+      let itemPrice;
+      if (product.onSale && product.salePrice) {
+        // Use sale price based on user type
+        itemPrice = isLicensed 
+          ? product.salePrice.licensedPrice 
+          : product.salePrice.unlicensedPrice;
+      } else {
+        // Use regular price based on user type
+        itemPrice = isLicensed 
+          ? product.price.licensedPrice 
+          : product.price.unlicensedPrice;
+      }
+      
+      return total + (itemPrice * item.quantity);
     }, 0);
   } else {
     cart.totalPrice = 0;
