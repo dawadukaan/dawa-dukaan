@@ -17,8 +17,7 @@ export async function GET(request) {
     
     const user = await User.findById(session.user.id)
       .select('-password')
-      .populate('defaultAddress')
-      .populate('addresses');
+      .populate('defaultAddress');
     
     if (!user) {
       return errorResponse("User not found", 404);
