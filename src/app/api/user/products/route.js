@@ -25,10 +25,10 @@ export async function GET(request) {
     let isLicensed = false;
     
     if (userTypeParam) {
-      isLicensed = userTypeParam === 'licensee';
+      isLicensed = userTypeParam === 'licensed';
     } else {
       // If no userType specified, use the user's actual type
-      isLicensed = session?.user?.type === 'licensee';
+      isLicensed = session?.user?.type === 'licensed';
     }
     
     // Build query - always show all products regardless of user type
