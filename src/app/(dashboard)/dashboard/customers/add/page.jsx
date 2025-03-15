@@ -249,7 +249,7 @@ export default function AddCustomerPage() {
       console.log('Sending user data:', userData);
       
       // Send data to API
-      const response = await fetch('http://localhost:3000/api/admin/users', {
+      const response = await fetch('https://davadukaanproject.vercel.app/api/admin/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -277,7 +277,7 @@ export default function AddCustomerPage() {
         };
         
         // Create address
-        const addressResponse = await fetch('http://localhost:3000/api/admin/addresses', {
+        const addressResponse = await fetch('https://davadukaanproject.vercel.app/api/admin/addresses', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
