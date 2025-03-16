@@ -16,6 +16,8 @@ export async function GET(request) {
     }
     
     const userId = session.user.id;
+    const userType = session.user.type;
+    console.log(userType);
     
     // Find user's cart with populated product details
     let cart = await Cart.findOne({ user: userId }).populate({
