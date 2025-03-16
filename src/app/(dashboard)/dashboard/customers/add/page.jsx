@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCookie } from 'cookies-next';
 import { toast } from 'react-hot-toast';
+import { use } from 'react'; // Add this import
 import { 
   FiUser, FiMail, FiPhone, FiMapPin, FiHome, 
-  FiSave, FiX, FiArrowLeft, FiInfo, FiAlertCircle,
+  FiSave, FiX, FiArrowLeft, FiAlertCircle,
   FiChevronRight, FiChevronLeft, FiCheck, FiCreditCard,
-  FiShield, FiFileText
+  FiShield, FiFileText, FiInfo
 } from 'react-icons/fi';
+import env from '@/lib/config/env';
 
 export default function AddCustomerPage() {
   const router = useRouter();
@@ -19,31 +21,37 @@ export default function AddCustomerPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState([]);
   
-  // Customer form state
+  // Customer form state - aligned with User schema
   const [customer, setCustomer] = useState({
     name: '',
     email: '',
     phone: '',
-    password: '', // Default password for new customers
+    password: 'Password@123', // Default password for new customers
     isActive: true,
     role: 'customer',
     type: 'unlicensed',
     avatar: '',
     address: {
-      street: '',
+      addressType: 'home',
+      addressLine1: '',
+      addressLine2: '',
       city: '',
       state: '',
       pincode: ''
     },
     licenseDetails: {
       licenseNumber: '',
-      expiryDate: '',
-      issuingAuthority: ''
+      licenseDocument: ''
     }
   });
 
   // Handle image upload
   const [avatarPreview, setAvatarPreview] = useState(null);
+
+  // Add these state variables for tracking uploads
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingLicense, setIsUploadingLicense] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ avatar: 0, license: 0 });
 
   // Define steps
   const steps = [
@@ -80,11 +88,6 @@ export default function AddCustomerPage() {
       setCustomer({
         ...customer,
         isActive: value === 'active'
-      });
-    } else if (name === 'type') {
-      setCustomer({
-        ...customer,
-        type: value
       });
     } else {
       setCustomer({
@@ -137,21 +140,9 @@ export default function AddCustomerPage() {
         
       case 3: // License Details
         // If customer type is licensee, validate license details
-        if (customer.type === 'licensee') {
-          if (!customer.licenseDetails.licenseNumber.trim()) {
-            setFormError('License number is required for licensed customers');
-            return false;
-          }
-          
-          if (!customer.licenseDetails.expiryDate) {
-            setFormError('License expiry date is required');
-            return false;
-          }
-          
-          if (!customer.licenseDetails.issuingAuthority.trim()) {
-            setFormError('Issuing authority is required');
-            return false;
-          }
+        if (customer.type === 'licensee' && !customer.licenseDetails.licenseNumber.trim()) {
+          setFormError('License number is required for licensed customers');
+          return false;
         }
         
         return true;
@@ -197,20 +188,96 @@ export default function AddCustomerPage() {
   };
 
   // Handle image upload
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Create a preview URL for the image
-      const previewUrl = URL.createObjectURL(file);
-      setAvatarPreview(previewUrl);
+    if (!file) return;
+    
+    // Create a preview URL for the image
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+    
+    try {
+      setIsUploadingAvatar(true);
       
-      // For a real implementation, you would upload the image to a server
-      // and get back a URL to store in customer.avatar
-      // For now, we'll just store the file name
+      // Create form data for upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'user-avatars');
+      
+      // Upload to Cloudinary via your API
+      const response = await fetch(`${env.app.apiUrl}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload avatar');
+      }
+      
+      const data = await response.json();
+      
+      // Update customer state with the Cloudinary URL
       setCustomer({
         ...customer,
-        avatar: file.name
+        avatar: data.url
       });
+      
+      toast.success('Profile image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error(error.message || 'Failed to upload profile image');
+      // Keep the preview but show an error
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  // Handle license document upload
+  const handleLicenseDocChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      setIsUploadingLicense(true);
+      
+      // Create form data for upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'license-documents');
+      
+      // Upload to Cloudinary via your API
+      const response = await fetch(`${env.app.apiUrl}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload license document');
+      }
+      
+      const data = await response.json();
+      console.log('License document upload response:', data);
+      
+      // Update customer state with the Cloudinary URL
+      setCustomer(prevCustomer => ({
+        ...prevCustomer,
+        licenseDetails: {
+          ...prevCustomer.licenseDetails,
+          licenseDocument: data.url
+        }
+      }));
+      
+      // Log the updated customer state to verify
+      console.log('Updated customer state after license upload:', customer.licenseDetails);
+      
+      toast.success('License document uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading license document:', error);
+      toast.error(error.message || 'Failed to upload license document');
+    } finally {
+      setIsUploadingLicense(false);
     }
   };
 
@@ -243,13 +310,18 @@ export default function AddCustomerPage() {
       
       // Add license details if customer is a licensee
       if (customer.type === 'licensee') {
-        userData.licenseDetails = customer.licenseDetails;
+        // Make sure to include the licenseDetails object with all properties
+        userData.licenseDetails = {
+          licenseNumber: customer.licenseDetails.licenseNumber || '',
+          licenseDocument: customer.licenseDetails.licenseDocument || ''
+        };
+        
+        // Log the license details to verify they're being included
+        console.log('License details being sent:', userData.licenseDetails);
       }
       
-      console.log('Sending user data:', userData);
-      
       // Send data to API
-      const response = await fetch('https://davadukaanproject.vercel.app/api/admin/users', {
+      const response = await fetch(`${env.app.apiUrl}/admin/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -258,18 +330,22 @@ export default function AddCustomerPage() {
         body: JSON.stringify(userData),
       });
       
+      // Log the full request payload for debugging
+      console.log('Full user data being sent:', userData);
+      
       const data = await response.json();
-      console.log('API Response:', data);
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create customer');
       }
       
       // If we have address data, create an address for the user
-      if (customer.address.street || customer.address.city || customer.address.state || customer.address.pincode) {
+      if (customer.address.addressLine1 || customer.address.city || customer.address.state || customer.address.pincode) {
         const addressData = {
           userId: data.data._id,
-          street: customer.address.street,
+          addressType: customer.address.addressType,
+          addressLine1: customer.address.addressLine1,
+          addressLine2: customer.address.addressLine2,
           city: customer.address.city,
           state: customer.address.state,
           pincode: customer.address.pincode,
@@ -277,7 +353,7 @@ export default function AddCustomerPage() {
         };
         
         // Create address
-        const addressResponse = await fetch('https://davadukaanproject.vercel.app/api/admin/addresses', {
+        const addressResponse = await fetch(`${env.app.apiUrl}/admin/addresses`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -409,10 +485,10 @@ export default function AddCustomerPage() {
                   onChange={handleChange}
                 >
                   <option value="unlicensed">Unlicensed</option>
-                  <option value="licensee">Licensed</option>
+                  <option value="licensee">Licensee</option>
                 </select>
                 <p className="mt-1 text-xs text-gray-500">
-                  Licensed customers can purchase prescription medicines
+                  Licensee customers can purchase prescription medicines
                 </p>
               </div>
             </div>
@@ -424,9 +500,27 @@ export default function AddCustomerPage() {
           <div className="space-y-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Address Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="addressType" className="block text-sm font-medium text-gray-700 mb-1">
+                  Address Type
+                </label>
+                <select
+                  id="addressType"
+                  name="address.addressType"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  value={customer.address.addressType}
+                  onChange={handleChange}
+                >
+                  <option value="home">Home</option>
+                  <option value="shop">Shop</option>
+                  <option value="office">Office</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              
               <div className="md:col-span-2">
-                <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
-                  Street Address
+                <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-700 mb-1">
+                  Address Line 1
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -434,14 +528,29 @@ export default function AddCustomerPage() {
                   </div>
                   <input
                     type="text"
-                    id="street"
-                    name="address.street"
-                    placeholder="123 Main Street, Apartment 4B"
+                    id="addressLine1"
+                    name="address.addressLine1"
+                    placeholder="House/Flat No., Building Name, Street"
                     className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    value={customer.address.street}
+                    value={customer.address.addressLine1}
                     onChange={handleChange}
                   />
                 </div>
+              </div>
+              
+              <div className="md:col-span-2">
+                <label htmlFor="addressLine2" className="block text-sm font-medium text-gray-700 mb-1">
+                  Address Line 2
+                </label>
+                <input
+                  type="text"
+                  id="addressLine2"
+                  name="address.addressLine2"
+                  placeholder="Area, Landmark, etc."
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  value={customer.address.addressLine2}
+                  onChange={handleChange}
+                />
               </div>
               
               <div>
@@ -550,14 +659,14 @@ export default function AddCustomerPage() {
                     <h3 className="text-sm font-medium text-yellow-800">Unlicensed Customer</h3>
                     <p className="text-sm text-yellow-700 mt-1">
                       This customer is marked as unlicensed and will not be able to purchase prescription medicines.
-                      To enable prescription purchases, go back to step 1 and change the license type to "Licensed".
+                      To enable prescription purchases, go back to step 1 and change the license type to "Licensee".
                     </p>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <div className="md:col-span-2">
                   <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700 mb-1">
                     License Number <span className="text-red-500">*</span>
                   </label>
@@ -576,42 +685,67 @@ export default function AddCustomerPage() {
                       required={customer.type === 'licensee'}
                     />
                   </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-1">
-                    Expiry Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="expiryDate"
-                    name="licenseDetails.expiryDate"
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    value={customer.licenseDetails.expiryDate}
-                    onChange={handleChange}
-                    required={customer.type === 'licensee'}
-                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Enter the license number exactly as it appears on the document
+                  </p>
                 </div>
                 
                 <div className="md:col-span-2">
-                  <label htmlFor="issuingAuthority" className="block text-sm font-medium text-gray-700 mb-1">
-                    Issuing Authority <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    License Document {customer.type === 'licensee' && <span className="text-red-500">*</span>}
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FiShield className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      id="issuingAuthority"
-                      name="licenseDetails.issuingAuthority"
-                      placeholder="e.g. State Pharmacy Council"
-                      className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      value={customer.licenseDetails.issuingAuthority}
-                      onChange={handleChange}
-                      required={customer.type === 'licensee'}
-                    />
+                  <div className="mt-1">
+                    <label className="block w-full">
+                      <span className="sr-only">Choose license document</span>
+                      <input 
+                        type="file" 
+                        className="block w-full text-sm text-gray-500
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-lg file:border-0
+                          file:text-sm file:font-medium
+                          file:bg-green-50 file:text-green-700
+                          hover:file:bg-green-100
+                          disabled:opacity-50 disabled:cursor-not-allowed
+                        "
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleLicenseDocChange}
+                        disabled={isUploadingLicense}
+                      />
+                    </label>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Upload license document (PDF, JPG, PNG)
+                    </p>
+                    
+                    {isUploadingLicense && (
+                      <div className="mt-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div className="bg-green-600 h-2.5 rounded-full animate-pulse"></div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Uploading...</p>
+                      </div>
+                    )}
+                    
+                    {customer.licenseDetails.licenseDocument && !isUploadingLicense && (
+                      <div className="mt-2 flex items-center">
+                        <FiCheck className="text-green-500 mr-1" />
+                        <span className="text-xs text-green-600">Document uploaded successfully</span>
+                        <a 
+                          href={customer.licenseDetails.licenseDocument} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="ml-2 text-xs text-blue-600 hover:underline"
+                        >
+                          View document
+                        </a>
+                      </div>
+                    )}
                   </div>
+                </div>
+                
+                {/* Debug information - remove in production */}
+                <div className="md:col-span-2 mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-500">
+                  <p>Current license details state:</p>
+                  <pre>{JSON.stringify(customer.licenseDetails, null, 2)}</pre>
                 </div>
               </div>
             )}
@@ -677,22 +811,41 @@ export default function AddCustomerPage() {
                       </div>
                     )}
                   </div>
-                  <label className="block">
-                    <span className="sr-only">Choose profile photo</span>
-                    <input 
-                      type="file" 
-                      className="block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-lg file:border-0
-                        file:text-sm file:font-medium
-                        file:bg-green-50 file:text-green-700
-                        hover:file:bg-green-100
-                      "
-                      accept="image/*"
-                      onChange={handleImageChange}
-                    />
-                    <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
-                  </label>
+                  <div className="flex-1">
+                    <label className="block">
+                      <span className="sr-only">Choose profile photo</span>
+                      <input 
+                        type="file" 
+                        className="block w-full text-sm text-gray-500
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-lg file:border-0
+                          file:text-sm file:font-medium
+                          file:bg-green-50 file:text-green-700
+                          hover:file:bg-green-100
+                          disabled:opacity-50 disabled:cursor-not-allowed
+                        "
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        disabled={isUploadingAvatar}
+                      />
+                      <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                    </label>
+                    
+                    {isUploadingAvatar && (
+                      <div className="mt-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div className="bg-green-600 h-2.5 rounded-full animate-pulse"></div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Uploading...</p>
+                      </div>
+                    )}
+                    
+                    {customer.avatar && !isUploadingAvatar && (
+                      <p className="text-xs text-green-600 mt-1">
+                        <FiCheck className="inline mr-1" /> Image uploaded successfully
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

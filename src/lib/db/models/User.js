@@ -57,6 +57,16 @@ const UserSchema = new mongoose.Schema({
     enum: ['licensee', 'unlicensed'],
     default: 'unlicensed',
   },
+  licenseDetails: {
+    licenseNumber: {
+      type: String,
+      default: '',
+    },
+    licenseDocument: {
+      type: String,
+      default: '',
+    },
+  },
   createdAt: {
     type: Date,
     default: Date.now,

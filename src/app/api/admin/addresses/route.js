@@ -35,10 +35,12 @@ export async function POST(request) {
       );
     }
     
-    // Create new address
+    // Create new address with updated schema fields
     const address = await Address.create({
       userId: addressData.userId,
-      street: addressData.street || '',
+      addressType: addressData.addressType || 'other',
+      addressLine1: addressData.addressLine1 || '',
+      addressLine2: addressData.addressLine2 || '',
       city: addressData.city || '',
       state: addressData.state || '',
       pincode: addressData.pincode || '',
@@ -99,5 +101,72 @@ export async function GET(request) {
   } catch (error) {
     console.error("Error fetching addresses:", error);
     return errorResponse("Failed to fetch addresses: " + error.message, 500);
+  }
+}
+
+// PUT /api/admin/addresses/:id - Update an address
+export async function PUT(request, { params }) {
+  try {
+    await dbConnect();
+    const { authenticated, response } = await authenticateAdmin(request);
+    
+    if (!authenticated) {
+      return response;
+    }
+    
+    // Get the address ID from the URL
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const addressId = pathParts[pathParts.length - 1];
+    
+    if (!addressId) {
+      return errorResponse("Address ID is required", 400);
+    }
+    
+    const addressData = await request.json();
+    
+    // Find the address
+    const address = await Address.findById(addressId);
+    if (!address) {
+      return errorResponse("Address not found", 404);
+    }
+    
+    // If this is set as default, unset any existing default addresses
+    if (addressData.isDefault) {
+      await Address.updateMany(
+        { userId: address.userId, isDefault: true, _id: { $ne: addressId } },
+        { $set: { isDefault: false } }
+      );
+      
+      // Update user's defaultAddress
+      await User.findByIdAndUpdate(
+        address.userId,
+        { defaultAddress: addressId }
+      );
+    }
+    
+    // Update address fields
+    address.addressType = addressData.addressType || address.addressType;
+    address.addressLine1 = addressData.addressLine1 || address.addressLine1;
+    address.addressLine2 = addressData.addressLine2 || '';
+    address.city = addressData.city || address.city;
+    address.state = addressData.state || address.state;
+    address.pincode = addressData.pincode || address.pincode;
+    address.isDefault = addressData.isDefault || address.isDefault;
+    address.updatedAt = Date.now();
+    
+    await address.save();
+    
+    return successResponse(address);
+  } catch (error) {
+    console.error("Error updating address:", error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      return errorResponse(validationErrors.join(', '), 400);
+    }
+    
+    return errorResponse("Failed to update address: " + error.message, 500);
   }
 } 

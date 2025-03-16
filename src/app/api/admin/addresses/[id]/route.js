@@ -1,15 +1,16 @@
-// src/app/api/user/addresses/[id]/route.js
-import dbConnect from "@/lib/db/connect";
-import User from "@/lib/db/models/User";
-import Address from "@/lib/db/models/Address";
-import { successResponse, errorResponse } from "@/lib/api/apiResponse";
-import { authenticateUser } from "@/lib/api/authMiddleware";
+// src/app/api/admin/addresses/[id]/route.js
 
-// GET /api/user/addresses/[id] - Get a specific address by ID
+import dbConnect from "@/lib/db/connect";
+import Address from "@/lib/db/models/Address";
+import User from "@/lib/db/models/User";
+import { successResponse, errorResponse } from "@/lib/api/apiResponse";
+import { authenticateAdmin } from "@/lib/api/authMiddleware";
+
+// GET /api/admin/addresses/[id] - Get a specific address
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-    const { authenticated, response, session } = await authenticateUser(request);
+    const { authenticated, response } = await authenticateAdmin(request);
     
     if (!authenticated) {
       return response;
@@ -17,16 +18,15 @@ export async function GET(request, { params }) {
     
     const { id } = params;
     
-    // Find the specific address
+    if (!id) {
+      return errorResponse("Address ID is required", 400);
+    }
+    
+    // Find the address
     const address = await Address.findById(id);
     
     if (!address) {
       return errorResponse("Address not found", 404);
-    }
-    
-    // Check if the address belongs to the authenticated user
-    if (address.userId.toString() !== session.user.id) {
-      return errorResponse("Unauthorized access to this address", 403);
     }
     
     return successResponse(address);
@@ -36,41 +36,40 @@ export async function GET(request, { params }) {
   }
 }
 
-// PUT /api/user/addresses/[id] - Update a specific address
+// PUT /api/admin/addresses/[id] - Update an address
 export async function PUT(request, { params }) {
   try {
     await dbConnect();
-    const { authenticated, response, session } = await authenticateUser(request);
+    const { authenticated, response } = await authenticateAdmin(request);
     
     if (!authenticated) {
       return response;
     }
     
     const { id } = params;
+    
+    if (!id) {
+      return errorResponse("Address ID is required", 400);
+    }
+    
     const addressData = await request.json();
     
     // Find the address
     const address = await Address.findById(id);
-    
     if (!address) {
       return errorResponse("Address not found", 404);
-    }
-    
-    // Check if the address belongs to the authenticated user
-    if (address.userId.toString() !== session.user.id) {
-      return errorResponse("Unauthorized access to this address", 403);
     }
     
     // If this is set as default, unset any existing default addresses
     if (addressData.isDefault) {
       await Address.updateMany(
-        { userId: session.user.id, isDefault: true, _id: { $ne: id } },
+        { userId: address.userId, isDefault: true, _id: { $ne: id } },
         { $set: { isDefault: false } }
       );
       
       // Update user's defaultAddress
       await User.findByIdAndUpdate(
-        session.user.id,
+        address.userId,
         { defaultAddress: id }
       );
     }
@@ -101,17 +100,21 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE /api/user/addresses/[id] - Delete a specific address
+// DELETE /api/admin/addresses/[id] - Delete an address
 export async function DELETE(request, { params }) {
   try {
     await dbConnect();
-    const { authenticated, response, session } = await authenticateUser(request);
+    const { authenticated, response } = await authenticateAdmin(request);
     
     if (!authenticated) {
       return response;
     }
     
     const { id } = params;
+    
+    if (!id) {
+      return errorResponse("Address ID is required", 400);
+    }
     
     // Find the address
     const address = await Address.findById(id);
@@ -120,23 +123,17 @@ export async function DELETE(request, { params }) {
       return errorResponse("Address not found", 404);
     }
     
-    // Check if the address belongs to the authenticated user
-    if (address.userId.toString() !== session.user.id) {
-      return errorResponse("Unauthorized access to this address", 403);
-    }
-    
     // Remove address from user's addresses array
     await User.findByIdAndUpdate(
-      session.user.id,
+      address.userId,
       { $pull: { addresses: id } }
     );
     
     // If this was the default address, clear the default address reference
-    const user = await User.findById(session.user.id);
-    if (user.defaultAddress && user.defaultAddress.toString() === id) {
-      user.defaultAddress = undefined;
-      await user.save();
-    }
+    await User.findOneAndUpdate(
+      { defaultAddress: id },
+      { $unset: { defaultAddress: "" } }
+    );
     
     // Delete the address
     await Address.findByIdAndDelete(id);
@@ -147,3 +144,4 @@ export async function DELETE(request, { params }) {
     return errorResponse("Failed to delete address: " + error.message, 500);
   }
 }
+

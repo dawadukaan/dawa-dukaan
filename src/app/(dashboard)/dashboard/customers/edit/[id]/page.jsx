@@ -1,87 +1,16 @@
-// src/app/(dashboard)/dashboard/customers/edit/[id]/page.jsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { use } from 'react';
+import { getCookie } from 'cookies-next';
+import { toast } from 'react-hot-toast';
 import { 
   FiUser, FiMail, FiPhone, FiMapPin, FiHome, 
-  FiSave, FiX, FiArrowLeft, FiInfo, FiAlertCircle,
-  FiTrash2, FiShoppingBag, FiCalendar
+  FiSave, FiX, FiArrowLeft, FiAlertCircle,
+  FiShield, FiCreditCard, FiUpload, FiImage, FiFileText, FiExternalLink, FiInfo
 } from 'react-icons/fi';
-
-// Sample customers data for demonstration
-const sampleCustomers = [
-  {
-    id: '1',
-    name: 'Rahul Sharma',
-    email: 'rahul.s@example.com',
-    phone: '+91 98765 43210',
-    dateJoined: '2023-01-15T10:30:00',
-    totalOrders: 12,
-    totalSpent: 15250.00,
-    address: {
-      street: '123 Main Street, Apartment 4B',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001'
-    },
-    status: 'active',
-    notes: 'Prefers delivery in the evening after 6 PM.'
-  },
-  {
-    id: '2',
-    name: 'Priya Patel',
-    email: 'priya.p@example.com',
-    phone: '+91 87654 32109',
-    dateJoined: '2023-02-20T14:45:00',
-    totalOrders: 8,
-    totalSpent: 9875.50,
-    address: {
-      street: '456 Park Avenue',
-      city: 'Bangalore',
-      state: 'Karnataka',
-      pincode: '560001'
-    },
-    status: 'active',
-    notes: 'Allergic to certain pesticides, prefers organic products only.'
-  },
-  {
-    id: '3',
-    name: 'Amit Kumar',
-    email: 'amit.k@example.com',
-    phone: '+91 76543 21098',
-    dateJoined: '2023-03-10T09:15:00',
-    totalOrders: 15,
-    totalSpent: 22340.00,
-    address: {
-      street: '789 Lake View Road',
-      city: 'Delhi',
-      state: 'Delhi',
-      pincode: '110001'
-    },
-    status: 'active',
-    notes: 'Regular customer, part of loyalty program tier 2.'
-  },
-  {
-    id: '4',
-    name: 'Sneha Reddy',
-    email: 'sneha.r@example.com',
-    phone: '+91 65432 10987',
-    dateJoined: '2023-02-05T16:20:00',
-    totalOrders: 5,
-    totalSpent: 6560.75,
-    address: {
-      street: '101 Hill Road',
-      city: 'Hyderabad',
-      state: 'Telangana',
-      pincode: '500001'
-    },
-    status: 'inactive',
-    notes: 'Account inactive since April 2023.'
-  }
-];
+import env from '@/lib/config/env';
 
 export default function EditCustomerPage({ params }) {
   const router = useRouter();
@@ -91,35 +20,101 @@ export default function EditCustomerPage({ params }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingLicense, setIsUploadingLicense] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   // Customer form state
-  const [customer, setCustomer] = useState(null);
+  const [customer, setCustomer] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    isActive: true,
+    type: 'unlicensed',
+    avatar: '',
+    address: {
+      addressType: 'home',
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      state: '',
+      pincode: ''
+    },
+    licenseDetails: {
+      licenseNumber: '',
+      licenseDocument: ''
+    }
+  });
+  
   const [originalCustomer, setOriginalCustomer] = useState(null);
+  const [defaultAddressId, setDefaultAddressId] = useState(null);
 
   // Fetch customer data
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
-        // In a real app, you would fetch from your API
-        // const response = await fetch(`/api/customers/${id}`);
-        // if (!response.ok) throw new Error('Failed to fetch customer');
-        // const data = await response.json();
+        setIsLoading(true);
+        const token = getCookie('token');
         
-        // For demo, we'll use sample data
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+        // Fetch customer data
+        const response = await fetch(`${env.app.apiUrl}/admin/users/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
-        const foundCustomer = sampleCustomers.find(customer => customer.id === id);
-        
-        if (!foundCustomer) {
-          console.error(`Customer with ID ${id} not found`);
-          setFormError(`Customer with ID ${id} not found. Please check the URL or return to the customers list.`);
-          setIsLoading(false);
-          return;
+        if (!response.ok) {
+          throw new Error('Failed to fetch customer');
         }
         
-        setCustomer(foundCustomer);
-        setOriginalCustomer(foundCustomer);
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to fetch customer');
+        }
+        
+        const userData = data.data;
+        
+        // Set customer data
+        setCustomer({
+          name: userData.name || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+          isActive: userData.isActive !== undefined ? userData.isActive : true,
+          type: userData.type || 'unlicensed',
+          avatar: userData.avatar || '',
+          address: {
+            addressType: 'home',
+            addressLine1: '',
+            addressLine2: '',
+            city: '',
+            state: '',
+            pincode: ''
+          },
+          licenseDetails: userData.licenseDetails || {
+            licenseNumber: '',
+            licenseDocument: ''
+          }
+        });
+        
+        // Set addresses if available
+        if (userData.defaultAddress) {
+          setDefaultAddressId(userData.defaultAddress._id);
+          
+          setCustomer(prev => ({
+            ...prev,
+            address: {
+              addressType: userData.defaultAddress.addressType || 'home',
+              addressLine1: userData.defaultAddress.addressLine1 || '',
+              addressLine2: userData.defaultAddress.addressLine2 || '',
+              city: userData.defaultAddress.city || '',
+              state: userData.defaultAddress.state || '',
+              pincode: userData.defaultAddress.pincode || ''
+            }
+          }));
+        }
+        
+        setOriginalCustomer(userData);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching customer:', error);
@@ -144,11 +139,171 @@ export default function EditCustomerPage({ params }) {
           [addressField]: value
         }
       });
+    } else if (name.startsWith('licenseDetails.')) {
+      const licenseField = name.split('.')[1];
+      setCustomer({
+        ...customer,
+        licenseDetails: {
+          ...customer.licenseDetails,
+          [licenseField]: value
+        }
+      });
+    } else if (name === 'status') {
+      // Convert status to isActive boolean
+      setCustomer({
+        ...customer,
+        isActive: value === 'active'
+      });
     } else {
       setCustomer({
         ...customer,
         [name]: value
       });
+    }
+  };
+
+  // Handle avatar image upload
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      setFormError('Please upload a valid image file (JPEG, PNG)');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setFormError('Image size should be less than 5MB');
+      return;
+    }
+    
+    setIsUploadingAvatar(true);
+    setUploadProgress(0);
+    setFormError('');
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'customers/avatars');
+      
+      const token = getCookie('token');
+      
+      // Create upload progress tracker
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentComplete);
+        }
+      });
+      
+      // Use fetch for the actual upload
+      const response = await fetch(`${env.app.apiUrl}/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload image');
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to upload image');
+      }
+      
+      setCustomer({
+        ...customer,
+        avatar: data.data.url
+      });
+      
+      toast.success('Profile image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setFormError(`Error uploading image: ${error.message}`);
+    } finally {
+      setIsUploadingAvatar(false);
+      setUploadProgress(0);
+    }
+  };
+
+  // Handle license document upload
+  const handleLicenseDocChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      setFormError('Please upload a valid document file (JPEG, PNG, PDF)');
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      setFormError('Document size should be less than 10MB');
+      return;
+    }
+    
+    setIsUploadingLicense(true);
+    setUploadProgress(0);
+    setFormError('');
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'customers/licenses');
+      
+      const token = getCookie('token');
+      
+      // Create upload progress tracker
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentComplete);
+        }
+      });
+      
+      // Use fetch for the actual upload
+      const response = await fetch(`${env.app.apiUrl}/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload document');
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to upload document');
+      }
+      
+      setCustomer({
+        ...customer,
+        licenseDetails: {
+          ...customer.licenseDetails,
+          licenseDocument: data.data.url
+        }
+      });
+      
+      toast.success('License document uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      setFormError(`Error uploading document: ${error.message}`);
+    } finally {
+      setIsUploadingLicense(false);
+      setUploadProgress(0);
     }
   };
 
@@ -183,6 +338,12 @@ export default function EditCustomerPage({ params }) {
       return false;
     }
     
+    // If customer is licensee, validate license details
+    if (customer.type === 'licensee' && !customer.licenseDetails.licenseNumber) {
+      setFormError('License number is required for licensed customers');
+      return false;
+    }
+    
     return true;
   };
 
@@ -198,67 +359,120 @@ export default function EditCustomerPage({ params }) {
     setIsSubmitting(true);
     
     try {
-      // In a real app, you would send data to your API
-      // const response = await fetch(`/api/customers/${id}`, {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(customer),
-      // });
+      const token = getCookie('token');
       
-      // if (!response.ok) throw new Error('Failed to update customer');
+      // Prepare user data for API
+      const userData = {
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        isActive: customer.isActive,
+        type: customer.type,
+        avatar: customer.avatar
+      };
       
-      // For demo, we'll simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Add license details if customer is a licensee
+      if (customer.type === 'licensee') {
+        userData.licenseDetails = customer.licenseDetails;
+      }
+      
+      // Update user
+      const response = await fetch(`${env.app.apiUrl}/admin/users/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(userData),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update customer');
+      }
+      
+      // Check if address needs to be updated
+      const hasAddressChanged = 
+        customer.address.addressLine1 !== (originalCustomer.defaultAddress?.addressLine1 || '') ||
+        customer.address.addressLine2 !== (originalCustomer.defaultAddress?.addressLine2 || '') ||
+        customer.address.city !== (originalCustomer.defaultAddress?.city || '') ||
+        customer.address.state !== (originalCustomer.defaultAddress?.state || '') ||
+        customer.address.pincode !== (originalCustomer.defaultAddress?.pincode || '') ||
+        customer.address.addressType !== (originalCustomer.defaultAddress?.addressType || 'home');
+      
+      if (hasAddressChanged && (customer.address.addressLine1 || customer.address.city || customer.address.state || customer.address.pincode)) {
+        // If we have a default address, update it
+        if (defaultAddressId) {
+          const addressData = {
+            userId: id,
+            addressType: customer.address.addressType,
+            addressLine1: customer.address.addressLine1,
+            addressLine2: customer.address.addressLine2,
+            city: customer.address.city,
+            state: customer.address.state,
+            pincode: customer.address.pincode,
+            isDefault: true
+          };
+          
+          // Update address
+          const addressResponse = await fetch(`${env.app.apiUrl}/admin/addresses/${defaultAddressId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(addressData),
+          });
+          
+          if (!addressResponse.ok) {
+            console.error('Failed to update address, but user was updated');
+            toast.error('Customer updated, but address could not be saved');
+          }
+        } else {
+          // Create new address
+          const addressData = {
+            userId: id,
+            addressType: customer.address.addressType,
+            addressLine1: customer.address.addressLine1,
+            addressLine2: customer.address.addressLine2,
+            city: customer.address.city,
+            state: customer.address.state,
+            pincode: customer.address.pincode,
+            isDefault: true
+          };
+          
+          // Create address
+          const addressResponse = await fetch(`${env.app.apiUrl}/admin/addresses`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(addressData),
+          });
+          
+          if (!addressResponse.ok) {
+            console.error('Failed to create address, but user was updated');
+            toast.error('Customer updated, but address could not be saved');
+          }
+        }
+      }
+      
+      toast.success('Customer updated successfully');
       
       // Redirect to customers list
       router.push('/dashboard/customers');
     } catch (error) {
       console.error('Error updating customer:', error);
-      setFormError('Failed to update customer. Please try again.');
+      setFormError(error.message || 'Failed to update customer. Please try again.');
       setIsSubmitting(false);
-    }
-  };
-
-  // Handle delete customer
-  const handleDeleteCustomer = async () => {
-    setIsSubmitting(true);
-    
-    try {
-      // In a real app, you would send delete request to your API
-      // const response = await fetch(`/api/customers/${id}`, {
-      //   method: 'DELETE',
-      // });
-      
-      // if (!response.ok) throw new Error('Failed to delete customer');
-      
-      // For demo, we'll simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirect to customers list
-      router.push('/dashboard/customers');
-    } catch (error) {
-      console.error('Error deleting customer:', error);
-      setFormError('Failed to delete customer. Please try again.');
-      setIsSubmitting(false);
-      setShowDeleteConfirm(false);
     }
   };
 
   // Handle cancel
   const handleCancel = () => {
     router.push('/dashboard/customers');
-  };
-
-  // Format date for display
-  const formatDate = (dateString) => {
-    const options = { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric'
-    };
-    return new Date(dateString).toLocaleDateString('en-IN', options);
   };
 
   if (isLoading) {
@@ -269,7 +483,7 @@ export default function EditCustomerPage({ params }) {
     );
   }
 
-  if (!customer && !isLoading) {
+  if (!originalCustomer && !isLoading) {
     return (
       <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
         <p>{formError || 'Customer not found'}</p>
@@ -306,7 +520,7 @@ export default function EditCustomerPage({ params }) {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploadingAvatar || isUploadingLicense}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FiSave className="w-5 h-5 mr-2" />
@@ -324,381 +538,431 @@ export default function EditCustomerPage({ params }) {
       )}
 
       {/* Customer Form */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="p-6 space-y-6">
-              {/* Basic Information */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Basic Information */}
+          <div>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                      Customer Name <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FiUser className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        placeholder="Full Name"
-                        className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        value={customer.name}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Customer Name <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiUser className="h-5 w-5 text-gray-400" />
                   </div>
-                  
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FiMail className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        placeholder="email@example.com"
-                        className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        value={customer.email}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone Number <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FiPhone className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        placeholder="+91 98765 43210"
-                        className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        value={customer.phone}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                    <p className="mt-1 text-xs text-gray-500">Format: +91 or 10 digits</p>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      id="status"
-                      name="status"
-                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      value={customer.status}
-                      onChange={handleChange}
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="Full Name"
+                    className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    value={customer.name}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
               </div>
               
-              {/* Address Information */}
-              <div className="pt-6 border-t">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Address Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
-                      Street Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FiHome className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        id="street"
-                        name="address.street"
-                        placeholder="123 Main Street, Apartment 4B"
-                        className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        value={customer.address.street}
-                        onChange={handleChange}
-                      />
-                    </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiMail className="h-5 w-5 text-gray-400" />
                   </div>
-                  
-                  <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                      City
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="email@example.com"
+                    className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    value={customer.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiPhone className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    placeholder="+91 98765 43210"
+                    className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    value={customer.phone}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">Format: +91 or 10 digits</p>
+              </div>
+              
+              <div>
+                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  id="status"
+                  name="status"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  value={customer.isActive ? 'active' : 'inactive'}
+                  onChange={handleChange}
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+                  License Type
+                </label>
+                <select
+                  id="type"
+                  name="type"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  value={customer.type}
+                  onChange={handleChange}
+                >
+                  <option value="unlicensed">Unlicensed</option>
+                  <option value="licensee">Licensed</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Licensed customers can purchase prescription medicines
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Profile Image
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="flex-shrink-0">
+                    {customer.avatar ? (
+                      <img 
+                        src={customer.avatar} 
+                        alt={customer.name} 
+                        className="h-16 w-16 rounded-full object-cover border"
+                      />
+                    ) : (
+                      <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
+                        <FiUser className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-grow">
+                    <label className="cursor-pointer bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-center w-full">
+                      <FiUpload className="mr-2 h-4 w-4" />
+                      {isUploadingAvatar ? `Uploading... ${uploadProgress}%` : 'Upload Image'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageChange}
+                        disabled={isUploadingAvatar}
+                      />
                     </label>
+                    {isUploadingAvatar && (
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        <div 
+                          className="bg-green-600 h-2.5 rounded-full" 
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Address Information */}
+          <div className="pt-6 border-t">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Address Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="addressType" className="block text-sm font-medium text-gray-700 mb-1">
+                  Address Type
+                </label>
+                <select
+                  id="addressType"
+                  name="address.addressType"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  value={customer.address.addressType}
+                  onChange={handleChange}
+                >
+                  <option value="home">Home</option>
+                  <option value="shop">Shop</option>
+                  <option value="office">Office</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              
+              <div className="md:col-span-2">
+                <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-700 mb-1">
+                  Address Line 1
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiHome className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="addressLine1"
+                    name="address.addressLine1"
+                    placeholder="Street address, building, etc."
+                    className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    value={customer.address.addressLine1}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="md:col-span-2">
+                <label htmlFor="addressLine2" className="block text-sm font-medium text-gray-700 mb-1">
+                  Address Line 2
+                </label>
+                <input
+                  type="text"
+                  id="addressLine2"
+                  name="address.addressLine2"
+                  placeholder="Apartment, suite, unit, etc. (optional)"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  value={customer.address.addressLine2}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                  City
+                </label>
+                <input
+                  type="text"
+                  id="city"
+                  name="address.city"
+                  placeholder="Mumbai"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  value={customer.address.city}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+                  State
+                </label>
+                <select
+                  id="state"
+                  name="address.state"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  value={customer.address.state}
+                  onChange={handleChange}
+                >
+                  <option value="">Select State</option>
+                  <option value="Andhra Pradesh">Andhra Pradesh</option>
+                  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                  <option value="Assam">Assam</option>
+                  <option value="Bihar">Bihar</option>
+                  <option value="Chhattisgarh">Chhattisgarh</option>
+                  <option value="Goa">Goa</option>
+                  <option value="Gujarat">Gujarat</option>
+                  <option value="Haryana">Haryana</option>
+                  <option value="Himachal Pradesh">Himachal Pradesh</option>
+                  <option value="Jharkhand">Jharkhand</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Kerala">Kerala</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Manipur">Manipur</option>
+                  <option value="Meghalaya">Meghalaya</option>
+                  <option value="Mizoram">Mizoram</option>
+                  <option value="Nagaland">Nagaland</option>
+                  <option value="Odisha">Odisha</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="Sikkim">Sikkim</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Telangana">Telangana</option>
+                  <option value="Tripura">Tripura</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Uttarakhand">Uttarakhand</option>
+                  <option value="West Bengal">West Bengal</option>
+                  <option value="Delhi">Delhi</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="pincode" className="block text-sm font-medium text-gray-700 mb-1">
+                  PIN Code
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiMapPin className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="pincode"
+                    name="address.pincode"
+                    placeholder="400001"
+                    className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    value={customer.address.pincode}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* License Details (only shown for licensed customers) */}
+          {customer.type === 'licensee' && (
+            <div className="pt-6 border-t">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">License Details</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                    License Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FiCreditCard className="h-5 w-5 text-gray-400" />
+                    </div>
                     <input
                       type="text"
-                      id="city"
-                      name="address.city"
-                      placeholder="Mumbai"
-                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      value={customer.address.city}
+                      id="licenseNumber"
+                      name="licenseDetails.licenseNumber"
+                      placeholder="e.g. DL-12345-20230101"
+                      className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      value={customer.licenseDetails?.licenseNumber || ''}
                       onChange={handleChange}
+                      required={customer.type === 'licensee'}
                     />
                   </div>
-                  
-                  <div>
-                    <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
-                      State
-                    </label>
-                    <select
-                      id="state"
-                      name="address.state"
-                      className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      value={customer.address.state}
-                      onChange={handleChange}
-                    >
-                      <option value="">Select State</option>
-                      <option value="Andhra Pradesh">Andhra Pradesh</option>
-                      <option value="Arunachal Pradesh">Arunachal Pradesh</option>
-                      <option value="Assam">Assam</option>
-                      <option value="Bihar">Bihar</option>
-                      <option value="Chhattisgarh">Chhattisgarh</option>
-                      <option value="Goa">Goa</option>
-                      <option value="Gujarat">Gujarat</option>
-                      <option value="Haryana">Haryana</option>
-                      <option value="Himachal Pradesh">Himachal Pradesh</option>
-                      <option value="Jharkhand">Jharkhand</option>
-                      <option value="Karnataka">Karnataka</option>
-                      <option value="Kerala">Kerala</option>
-                      <option value="Madhya Pradesh">Madhya Pradesh</option>
-                      <option value="Maharashtra">Maharashtra</option>
-                      <option value="Manipur">Manipur</option>
-                      <option value="Meghalaya">Meghalaya</option>
-                      <option value="Mizoram">Mizoram</option>
-                      <option value="Nagaland">Nagaland</option>
-                      <option value="Odisha">Odisha</option>
-                      <option value="Punjab">Punjab</option>
-                      <option value="Rajasthan">Rajasthan</option>
-                      <option value="Sikkim">Sikkim</option>
-                      <option value="Tamil Nadu">Tamil Nadu</option>
-                      <option value="Telangana">Telangana</option>
-                      <option value="Tripura">Tripura</option>
-                      <option value="Uttar Pradesh">Uttar Pradesh</option>
-                      <option value="Uttarakhand">Uttarakhand</option>
-                      <option value="West Bengal">West Bengal</option>
-                      <option value="Delhi">Delhi</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="pincode" className="block text-sm font-medium text-gray-700 mb-1">
-                      PIN Code
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FiMapPin className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        id="pincode"
-                        name="address.pincode"
-                        placeholder="400001"
-                        className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        value={customer.address.pincode}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
                 </div>
-              </div>
-              
-              {/* Additional Information */}
-              <div className="pt-6 border-t">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Additional Information</h2>
+                
                 <div>
-                  <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                    Notes
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    License Document
                   </label>
-                  <textarea
-                    id="notes"
-                    name="notes"
-                    rows="4"
-                    placeholder="Add any additional notes about this customer..."
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    value={customer.notes || ''}
-                    onChange={handleChange}
-                  ></textarea>
-                </div>
-              </div>
-              
-              {/* Danger Zone */}
-              <div className="pt-6 border-t">
-                <h2 className="text-lg font-medium text-red-600 mb-4">Danger Zone</h2>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-start">
-                    <FiAlertCircle className="h-5 w-5 text-red-600 mr-3 mt-0.5" />
-                    <div>
-                      <h3 className="text-sm font-medium text-red-800">Delete this customer</h3>
-                      <p className="mt-1 text-sm text-red-700">
-                        Once you delete a customer, there is no going back. This action cannot be undone.
-                        All associated data will be permanently removed.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowDeleteConfirm(true)}
-                        disabled={isSubmitting}
-                        className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <FiTrash2 className="w-5 h-5 mr-2" />
-                        Delete Customer
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Form Actions */}
-            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={handleCancel}
-                disabled={isSubmitting}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
-              >
-                <FiX className="w-5 h-5 mr-2" />
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FiSave className="w-5 h-5 mr-2" />
-                {isSubmitting ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
-          </form>
-        </div>
-        
-        {/* Customer Information Sidebar */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Customer Information</h2>
-              
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                    <FiUser className="h-5 w-5 text-gray-500" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {customer.status === 'active' ? (
-                        <span className="text-green-600">● Active</span>
-                      ) : (
-                        <span className="text-gray-500">● Inactive</span>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-grow">
+                      <label className="cursor-pointer bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-center w-full">
+                        <FiUpload className="mr-2 h-4 w-4" />
+                        {isUploadingLicense ? `Uploading... ${uploadProgress}%` : 'Upload Document'}
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={handleLicenseDocChange}
+                          disabled={isUploadingLicense}
+                        />
+                      </label>
+                      {isUploadingLicense && (
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                          <div 
+                            className="bg-green-600 h-2.5 rounded-full" 
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
                       )}
+                      <p className="mt-1 text-xs text-gray-500">
+                        Upload license document (PDF, JPEG, PNG)
+                      </p>
                     </div>
                   </div>
                 </div>
                 
-                <div className="pt-3 border-t">
-                  <div className="text-sm text-gray-500 flex items-center mb-2">
-                    <FiCalendar className="h-4 w-4 mr-2 text-gray-400" />
-                    Customer since {formatDate(customer.dateJoined)}
+                {/* Preview of license document if available */}
+                {customer.licenseDetails?.licenseDocument && (
+                  <div className="md:col-span-2 mt-2">
+                    <div className="bg-gray-50 rounded-lg p-4 border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <FiFileText className="h-5 w-5 text-gray-400 mr-2" />
+                          <span className="text-sm font-medium">License Document</span>
+                        </div>
+                        <a 
+                          href={customer.licenseDetails.licenseDocument} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-green-600 hover:text-green-700 flex items-center"
+                        >
+                          <FiExternalLink className="mr-1 h-4 w-4" />
+                          View
+                        </a>
+                      </div>
+                      <div className="mt-3">
+                        {customer.licenseDetails.licenseDocument.toLowerCase().endsWith('.pdf') ? (
+                          <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center border">
+                            <FiFileText className="h-10 w-10 text-gray-500" />
+                            <span className="ml-2 text-sm text-gray-600">PDF Document</span>
+                          </div>
+                        ) : (
+                          <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden bg-gray-100 border">
+                            <img 
+                              src={customer.licenseDetails.licenseDocument} 
+                              alt="License Document" 
+                              className="object-contain w-full h-full"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500 flex items-center mb-2">
-                    <FiShoppingBag className="h-4 w-4 mr-2 text-gray-400" />
-                    {customer.totalOrders} orders
-                  </div>
-                  <div className="text-sm text-gray-900 font-medium">
-                    Total spent: ₹{customer.totalSpent.toFixed(2)}
-                  </div>
-                </div>
+                )}
               </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
               
-              <div className="space-y-3">
-                <Link
-                  href={`/dashboard/customers/view/${customer.id}`}
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg flex items-center justify-center"
-                >
-                  <FiUser className="w-5 h-5 mr-2" />
-                  View Customer Profile
-                </Link>
-                
-                <Link
-                  href={`/dashboard/orders/add?customer=${customer.id}`}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
-                >
-                  <FiShoppingBag className="w-5 h-5 mr-2" />
-                  Create New Order
-                </Link>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex">
-              <FiInfo className="h-5 w-5 text-blue-500 mr-3 mt-0.5" />
-              <div>
-                <h3 className="text-sm font-medium text-blue-800">Editing a Customer</h3>
-                <div className="mt-2 text-sm text-blue-700">
-                  <p>
-                    Update the customer details as needed. Fields marked with an asterisk (*) are required.
-                    Changes will be saved when you click the "Save Changes" button.
-                  </p>
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex">
+                  <FiInfo className="h-5 w-5 text-blue-500 mr-3 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-blue-800">About License Documents</h3>
+                    <div className="mt-2 text-sm text-blue-700">
+                      <p>
+                        License documents are required for customers who need to purchase prescription medicines.
+                        Please ensure the license is valid and the document is clearly legible.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
+        </form>
+
+        {/* Form Actions */}
+        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
+          >
+            <FiX className="w-5 h-5 mr-2" />
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting || isUploadingAvatar || isUploadingLicense}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FiSave className="w-5 h-5 mr-2" />
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          </button>
         </div>
       </div>
-      
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
-            <p className="text-gray-700 mb-4">
-              Are you sure you want to delete <span className="font-medium">{customer.name}</span>? 
-              This action cannot be undone and all associated data will be permanently removed.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isSubmitting}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteCustomer}
-                disabled={isSubmitting}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Deleting...' : 'Delete Customer'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

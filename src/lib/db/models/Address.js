@@ -9,24 +9,30 @@ const AddressSchema = new mongoose.Schema({
   },
   addressType: {
     type: String,
-    enum: ['home', 'office', 'other'],
+    enum: ['shop', 'home', 'office', 'other'],
     default: 'other'
   },
-  location: {
+  addressLine1: {
     type: String,
-    trim: true
+    trim: true,
+  },
+  addressLine2: {
+    type: String,
+    trim: true,
+    default: ''
   },
   city: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   state: {
     type: String,
-    trim: true
+    trim: true,
   },
   pincode: {
     type: String,
-    trim: true
+    trim: true,
   },
   isDefault: {
     type: Boolean,

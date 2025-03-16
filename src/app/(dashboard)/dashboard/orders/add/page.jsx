@@ -309,11 +309,12 @@ export default function CreateOrderPage() {
         } : null,
         shippingAddress: selectedAddress ? selectedAddress._id : null,
         newAddress: !selectedAddress ? {
-          street: newCustomer.address.street,
+          addressLine1: newCustomer.address.addressLine1,
+          addressLine2: newCustomer.address.addressLine2 || '',
           city: newCustomer.address.city,
           state: newCustomer.address.state,
           pincode: newCustomer.address.pincode,
-          addressType: 'home'
+          addressType: 'shop'
         } : null,
         items: orderItems.map(item => ({
           product: item._id,
@@ -460,13 +461,13 @@ export default function CreateOrderPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-700">Select Existing Customer</h3>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedCustomer(null)}
-                        className="text-sm text-green-600 hover:text-green-700"
+                      <Link
+                        href="/dashboard/customers/add"
+                        className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md flex items-center"
                       >
-                        Enter New Customer
-                      </button>
+                        <FiPlus className="h-4 w-4 mr-1" />
+                        Add New Customer
+                      </Link>
                     </div>
                     
                     <div className="relative">
@@ -521,56 +522,6 @@ export default function CreateOrderPage() {
                         </ul>
                       )}
                     </div>
-                    
-                    <div className="pt-4">
-                      <h3 className="text-sm font-medium text-gray-700 mb-3">Or Enter New Customer Details</h3>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                            Full Name <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            id="name"
-                            name="name"
-                            type="text"
-                            required
-                            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            value={newCustomer.name}
-                            onChange={handleNewCustomerChange}
-                          />
-                        </div>
-                        
-                        <div>
-                          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                            Phone Number <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            id="phone"
-                            name="phone"
-                            type="text"
-                            required
-                            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            value={newCustomer.phone}
-                            onChange={handleNewCustomerChange}
-                          />
-                        </div>
-                        
-                        <div className="md:col-span-2">
-                          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                            Email Address
-                          </label>
-                          <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            value={newCustomer.email}
-                            onChange={handleNewCustomerChange}
-                          />
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <div className="bg-gray-50 p-4 rounded-lg">
@@ -614,7 +565,10 @@ export default function CreateOrderPage() {
                           <div className="flex justify-between">
                             <div>
                               <p className="font-medium text-gray-900 capitalize">{address.addressType || 'Default'} Address</p>
-                              <p className="text-sm text-gray-500">{address.street || address.location || 'No location provided'}</p>
+                              <p className="text-sm text-gray-500">{address.addressLine1 || 'No address provided'}</p>
+                              {address.addressLine2 && (
+                                <p className="text-sm text-gray-500">{address.addressLine2}</p>
+                              )}
                               <p className="text-sm text-gray-500">
                                 {address.city || 'No city'}, {address.state || 'No state'} {address.pincode || 'No pincode'}
                               </p>
@@ -630,88 +584,23 @@ export default function CreateOrderPage() {
                         </div>
                       ))}
                     </div>
-                    
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedAddress(null)}
-                        className="text-sm text-green-600 hover:text-green-700"
-                      >
-                        Enter Different Address
-                      </button>
-                    </div>
                   </div>
                 ) : (
-                  <div>
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-yellow-700 text-sm">
+                      {selectedCustomer ? 
+                        "No addresses found for this customer. Please add an address in the customer profile first." :
+                        "Please select a customer to see available shipping addresses."}
+                    </p>
                     {selectedCustomer && (
-                      <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-yellow-700 text-sm">
-                          No addresses found for this customer. Please enter a shipping address below.
-                        </p>
-                      </div>
+                      <Link 
+                        href={`/dashboard/customers/edit/${selectedCustomer._id}`}
+                        className="mt-2 inline-block text-sm bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded-md"
+                      >
+                        <FiMapPin className="inline-block h-4 w-4 mr-1" />
+                        Add Address
+                      </Link>
                     )}
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="address.street" className="block text-sm font-medium text-gray-700 mb-1">
-                          Street Address <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          id="address.street"
-                          name="address.street"
-                          type="text"
-                          required
-                          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                          value={newCustomer.address.street}
-                          onChange={handleNewCustomerChange}
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="address.city" className="block text-sm font-medium text-gray-700 mb-1">
-                          City <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          id="address.city"
-                          name="address.city"
-                          type="text"
-                          required
-                          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                          value={newCustomer.address.city}
-                          onChange={handleNewCustomerChange}
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="address.state" className="block text-sm font-medium text-gray-700 mb-1">
-                          State <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          id="address.state"
-                          name="address.state"
-                          type="text"
-                          required
-                          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                          value={newCustomer.address.state}
-                          onChange={handleNewCustomerChange}
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="address.pincode" className="block text-sm font-medium text-gray-700 mb-1">
-                          PIN Code <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          id="address.pincode"
-                          name="address.pincode"
-                          type="text"
-                          required
-                          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                          value={newCustomer.address.pincode}
-                          onChange={handleNewCustomerChange}
-                        />
-                      </div>
-                    </div>
                   </div>
                 )}
               </div>
@@ -1083,7 +972,10 @@ export default function CreateOrderPage() {
                     <div className="bg-gray-50 rounded-lg p-4 border">
                       {selectedAddress ? (
                         <div>
-                          <p className="text-sm">{selectedAddress.street || selectedAddress.location || 'No location provided'}</p>
+                          <p className="text-sm">{selectedAddress.addressLine1 || 'No address provided'}</p>
+                          {selectedAddress.addressLine2 && (
+                            <p className="text-sm">{selectedAddress.addressLine2}</p>
+                          )}
                           <p className="text-sm">
                             {selectedAddress.city || 'No city'}, {selectedAddress.state || 'No state'} {selectedAddress.pincode || 'No pincode'}
                           </p>

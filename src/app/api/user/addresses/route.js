@@ -15,7 +15,8 @@ export async function GET(request) {
       return response;
     }
     
-    const addresses = await Address.find({ user: session.user.id });
+    const addresses = await Address.find({ userId: session.user.id });
+    console.log(addresses);
     
     return successResponse(addresses);
   } catch (error) {

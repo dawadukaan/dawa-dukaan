@@ -6,10 +6,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import env from '@/lib/config/env';
 import { getCookie } from 'cookies-next';
+import { toast } from 'react-hot-toast';
 import { 
-  FiSearch, FiFilter, FiEye, FiDownload, FiEdit, 
+  FiSearch, FiFilter, FiEye, FiDownload, FiEdit, FiTrash2,
   FiCalendar, FiChevronDown, FiChevronUp, FiX, FiPlus,
-  FiUser, FiMail, FiPhone, FiMapPin, FiShoppingBag, FiCheckCircle, FiXCircle
+  FiUser, FiMail, FiPhone, FiMapPin, FiShoppingBag, FiCheckCircle, FiXCircle,
+  FiAlertTriangle
 } from 'react-icons/fi';
 
 export default function CustomersPage() {
@@ -30,6 +32,13 @@ export default function CustomersPage() {
   const [sortConfig, setSortConfig] = useState({
     key: 'dateJoined',
     direction: 'desc'
+  });
+
+  // Add new state for delete confirmation dialog
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    customerId: null,
+    customerName: ''
   });
 
   // Fetch customers data
@@ -291,6 +300,58 @@ export default function CustomersPage() {
 
   // Get unique states for filter dropdown
   const uniqueStates = [...new Set(customers.map(customer => customer.address.state))];
+
+  // Handle delete customer
+  const handleDeleteClick = (customer) => {
+    setDeleteDialog({
+      isOpen: true,
+      customerId: customer.id,
+      customerName: customer.name
+    });
+  };
+
+  // Confirm delete customer
+  const confirmDelete = async () => {
+    try {
+      const token = getCookie('token');
+      const response = await fetch(`${env.app.apiUrl}/admin/users/${deleteDialog.customerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete customer');
+      }
+
+      // Remove the deleted customer from the state
+      setCustomers(customers.filter(customer => customer.id !== deleteDialog.customerId));
+      
+      // Show success message
+      toast.success(`Customer "${deleteDialog.customerName}" deleted successfully`);
+      
+      // Close the dialog
+      setDeleteDialog({
+        isOpen: false,
+        customerId: null,
+        customerName: ''
+      });
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      toast.error(error.message || 'Failed to delete customer');
+    }
+  };
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setDeleteDialog({
+      isOpen: false,
+      customerId: null,
+      customerName: ''
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -606,14 +667,23 @@ export default function CustomersPage() {
                         <button
                           onClick={() => handleViewCustomer(customer.id)}
                           className="text-green-600 hover:text-green-900"
+                          title="View customer details"
                         >
                           <FiEye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleEditCustomer(customer.id)}
                           className="text-blue-600 hover:text-blue-900"
+                          title="Edit customer"
                         >
                           <FiEdit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(customer)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete customer"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -653,6 +723,38 @@ export default function CustomersPage() {
           </p>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteDialog.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 mx-4">
+            <div className="flex items-center text-red-600 mb-4">
+              <FiAlertTriangle className="h-6 w-6 mr-2" />
+              <h3 className="text-lg font-medium">Delete Customer</h3>
+            </div>
+            
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete <span className="font-semibold">{deleteDialog.customerName}</span>? 
+              This action cannot be undone and will permanently remove the customer and all associated data.
+            </p>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
