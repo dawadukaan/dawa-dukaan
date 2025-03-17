@@ -23,7 +23,14 @@ export async function POST(request) {
       name: data.name,
       email: data.email,
       password: data.password,
-      phone: data.phone
+      phone: data.phone,
+      isActive: false,
+      avatar: data.avatar,
+      type: data.type,
+      licenseDetails: {
+        licenseNumber: data.licenseNumber,
+        licenseDocument: data.licenseDocument,
+      },
     });
     
     await user.save();
@@ -33,13 +40,14 @@ export async function POST(request) {
       id: user._id.toString(),
       email: user.email,
       name: user.name,
+      type: user.type,
       role: 'customer',
       model: 'User',
       permissions: null,
     };
     
     // Generate token
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1y' }); // 1 year
     
     // Don't return password in response
     const userResponse = user.toObject();
@@ -51,7 +59,14 @@ export async function POST(request) {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: 'customer'
+        avatar: user.avatar,
+        isActive: user.isActive,
+        type: user.type,
+        role: 'customer',
+        licenseDetails: {
+          licenseNumber: user.licenseDetails.licenseNumber,
+          licenseDocument: user.licenseDetails.licenseDocument,
+        },
       },
       token
     }, 201);
