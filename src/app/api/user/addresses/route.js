@@ -36,33 +36,64 @@ export async function POST(request) {
     }
     
     const data = await request.json();
+    const userId = session.user.id;
     
-    // Create address
-    const address = new Address({
-      ...data,
-      user: session.user.id
+    // Validate required fields
+    if (!data.addressType || !data.addressLine1 || !data.city || !data.state || !data.pincode) {
+      return errorResponse("Address type, address line 1, city, state, and pincode are required", 400);
+    }
+    
+    // Check if the user already has an address of this type
+    const existingAddressWithType = await Address.findOne({ 
+      userId: userId, 
+      addressType: data.addressType 
     });
+    
+    if (existingAddressWithType) {
+      return errorResponse(`You already have an address with type '${data.addressType}'. Please update the existing address or choose a different type.`, 400);
+    }
+    
+    // Create new address
+    const address = new Address({
+      userId: userId,
+      addressType: data.addressType,
+      addressLine1: data.addressLine1,
+      addressLine2: data.addressLine2 || '',
+      city: data.city,
+      state: data.state,
+      pincode: data.pincode,
+      isDefault: data.isDefault || false,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+    
+    // If this address is set as default, unset any existing default addresses
+    if (data.isDefault) {
+      await Address.updateMany(
+        { userId: userId, isDefault: true },
+        { $set: { isDefault: false } }
+      );
+    }
     
     await address.save();
     
-    // If this is the first address or isDefault is true, set as default
-    const user = await User.findById(session.user.id);
+    // Update user's addresses array and defaultAddress if needed
+    const user = await User.findById(userId);
     
-    if (!user.defaultAddress || data.isDefault) {
-      user.defaultAddress = address._id;
-      
-      // If this is set as default, unset isDefault on other addresses
-      if (data.isDefault) {
-        await Address.updateMany(
-          { user: session.user.id, _id: { $ne: address._id } },
-          { isDefault: false }
-        );
-      }
+    if (!user.addresses) {
+      user.addresses = [];
     }
     
-    // Add to user's addresses array
-    if (!user.addresses.includes(address._id)) {
-      user.addresses.push(address._id);
+    user.addresses.push(address._id);
+    
+    // Set as default if it's the first address or isDefault is true
+    if (data.isDefault || user.addresses.length === 1) {
+      user.defaultAddress = address._id;
+      // Ensure isDefault flag is set if this is the first address
+      if (user.addresses.length === 1 && !data.isDefault) {
+        address.isDefault = true;
+        await address.save();
+      }
     }
     
     await user.save();
@@ -70,6 +101,13 @@ export async function POST(request) {
     return successResponse(address, 201);
   } catch (error) {
     console.error("Error creating address:", error);
-    return errorResponse(error.message || "Failed to create address", 500);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      return errorResponse(validationErrors.join(', '), 400);
+    }
+    
+    return errorResponse("Failed to create address: " + error.message, 500);
   }
 }
