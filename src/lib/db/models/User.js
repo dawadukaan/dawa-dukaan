@@ -67,6 +67,11 @@ const UserSchema = new mongoose.Schema({
       default: '',
     },
   },
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true, // Allows null/undefined values without unique constraint
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -79,6 +84,23 @@ const UserSchema = new mongoose.Schema({
 
 // Hash password before saving
 UserSchema.pre('save', async function(next) {
+
+  // Only run this function if this is a new user or the referralCode is modified
+  if (this.isNew && !this.referralCode) {
+    // Generate a unique referral code based on name and random string
+    const namePart = this.name.replace(/\s+/g, '').substring(0, 4).toUpperCase();
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    this.referralCode = `${namePart}${randomPart}`;
+    
+    // Check if code already exists and regenerate if needed
+    const existingUser = await mongoose.models.User.findOne({ referralCode: this.referralCode });
+    if (existingUser) {
+      const newRandomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+      this.referralCode = `${namePart}${newRandomPart}`;
+    }
+  }
+
+
   if (!this.isModified('password')) {
     next();
   }

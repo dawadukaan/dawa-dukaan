@@ -1,6 +1,7 @@
 // src/app/api/auth/register/route.js
 import dbConnect from "@/lib/db/connect";
 import User from "@/lib/db/models/User";
+import Referral from "@/lib/db/models/Referral";
 import { successResponse, errorResponse } from "@/lib/api/apiResponse";
 import jwt from "jsonwebtoken";
 
@@ -18,6 +19,27 @@ export async function POST(request) {
       return errorResponse("User with this email already exists", 400);
     }
 
+    // Check referral code if provided
+    let referrerInfo = null;
+    if (data.referralCode) {
+      const referralDoc = await Referral.findOne({ referralCode: data.referralCode })
+        .populate('user', 'email');
+      
+      if (!referralDoc) {
+        return errorResponse("Invalid referral code", 400);
+      }
+      
+      // Prevent using own referral code (if somehow the email matches)
+      if (referralDoc.user.email === data.email) {
+        return errorResponse("You cannot use your own referral code", 400);
+      }
+      
+      referrerInfo = {
+        referralId: referralDoc._id,
+        userId: referralDoc.user._id
+      };
+    }
+
     // Create new user
     const user = new User({
       name: data.name,
@@ -31,9 +53,44 @@ export async function POST(request) {
         licenseNumber: data.licenseNumber,
         licenseDocument: data.licenseDocument,
       },
+      // referralCode will be auto-generated in pre-save hook
     });
     
     await user.save();
+    
+    // Create a referral document for the new user
+    const userReferral = new Referral({
+      user: user._id,
+      referralCode: user.referralCode,
+      referredBy: referrerInfo ? referrerInfo.userId : null,
+      stats: {
+        totalReferrals: 0,
+        successfulReferrals: 0
+      }
+    });
+    
+    await userReferral.save();
+    
+    // If user was referred, update the referrer's referral document
+    if (referrerInfo) {
+      await Referral.findByIdAndUpdate(
+        referrerInfo.referralId,
+        {
+          $push: {
+            referees: {
+              user: user._id,
+              registeredAt: new Date(),
+              status: 'completed'
+            }
+          },
+          $inc: {
+            'stats.totalReferrals': 1,
+            'stats.successfulReferrals': 1
+          },
+          updatedAt: new Date()
+        }
+      );
+    }
     
     // Create token payload
     const payload = {
@@ -63,12 +120,14 @@ export async function POST(request) {
         isActive: user.isActive,
         type: user.type,
         role: 'customer',
+        referralCode: user.referralCode,
         licenseDetails: {
           licenseNumber: user.licenseDetails.licenseNumber,
           licenseDocument: user.licenseDetails.licenseDocument,
         },
       },
-      token
+      token,
+      referrer: referrerInfo ? { id: referrerInfo.userId } : null
     }, 201);
   } catch (error) {
     console.error("Error registering user:", error);
