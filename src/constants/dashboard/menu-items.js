@@ -106,6 +106,12 @@ export const MENU_ITEMS = [
       }
     ]
   },
+  {
+    label: 'Referrals',
+    path: '/dashboard/referrals',
+    icon: FiUsers,
+    description: 'Manage your referral program'
+  },
   // {
   //   label: 'Payments',
   //   path: '/dashboard/payments',

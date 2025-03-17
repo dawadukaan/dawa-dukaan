@@ -11,7 +11,7 @@ import {
   FiSearch, FiFilter, FiEye, FiDownload, FiEdit, FiTrash2,
   FiCalendar, FiChevronDown, FiChevronUp, FiX, FiPlus,
   FiUser, FiMail, FiPhone, FiMapPin, FiShoppingBag, FiCheckCircle, FiXCircle,
-  FiAlertTriangle
+  FiAlertTriangle, FiToggleLeft, FiToggleRight
 } from 'react-icons/fi';
 
 export default function CustomersPage() {
@@ -39,6 +39,15 @@ export default function CustomersPage() {
     isOpen: false,
     customerId: null,
     customerName: ''
+  });
+
+  // Add new state for status update confirmation dialog
+  const [statusDialog, setStatusDialog] = useState({
+    isOpen: false,
+    customerId: null,
+    customerName: '',
+    currentStatus: false,
+    newStatus: true
   });
 
   // Fetch customers data
@@ -353,6 +362,80 @@ export default function CustomersPage() {
     });
   };
 
+  // Add this function to handle status toggle click
+  const handleStatusToggleClick = (customer) => {
+    setStatusDialog({
+      isOpen: true,
+      customerId: customer.id,
+      customerName: customer.name,
+      currentStatus: customer.status === 'active',
+      newStatus: customer.status !== 'active' // Toggle the current status
+    });
+  };
+
+  // Add this function to confirm status update
+  const confirmStatusUpdate = async () => {
+    try {
+      const token = getCookie('token');
+      const response = await fetch(`${env.app.apiUrl}/admin/users/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: statusDialog.customerId,
+          isActive: statusDialog.newStatus,
+          reason: `Status ${statusDialog.newStatus ? 'activated' : 'deactivated'} from customer list`
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update user status');
+      }
+
+      const responseData = await response.json();
+      
+      // Update the customer in the local state
+      setCustomers(customers.map(customer => {
+        if (customer.id === statusDialog.customerId) {
+          return {
+            ...customer,
+            status: statusDialog.newStatus ? 'active' : 'inactive'
+          };
+        }
+        return customer;
+      }));
+      
+      // Show success message
+      toast.success(`Customer "${statusDialog.customerName}" ${statusDialog.newStatus ? 'activated' : 'deactivated'} successfully`);
+      
+      // Close the dialog
+      setStatusDialog({
+        isOpen: false,
+        customerId: null,
+        customerName: '',
+        currentStatus: false,
+        newStatus: true
+      });
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      toast.error(error.message || 'Failed to update user status');
+    }
+  };
+
+  // Add this function to cancel status update
+  const cancelStatusUpdate = () => {
+    setStatusDialog({
+      isOpen: false,
+      customerId: null,
+      customerName: '',
+      currentStatus: false,
+      newStatus: true
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -643,9 +726,22 @@ export default function CustomersPage() {
                       ₹{customer.totalSpent.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(customer.status)}`}>
-                        {customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
-                      </span>
+                      <div className="flex items-center">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(customer.status)}`}>
+                          {customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
+                        </span>
+                        <button
+                          onClick={() => handleStatusToggleClick(customer)}
+                          className={`ml-2 text-gray-500 hover:text-${customer.status === 'active' ? 'red' : 'green'}-600 transition-colors`}
+                          title={`${customer.status === 'active' ? 'Deactivate' : 'Activate'} customer`}
+                        >
+                          {customer.status === 'active' ? (
+                            <FiToggleRight className="w-6 h-6 text-green-500" />
+                          ) : (
+                            <FiToggleLeft className="w-6 h-6 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getLicenseTypeBadgeClass(customer.type)}`}>
@@ -750,6 +846,44 @@ export default function CustomersPage() {
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Update Confirmation Dialog */}
+      {statusDialog.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 mx-4">
+            <div className={`flex items-center text-${statusDialog.newStatus ? 'green' : 'red'}-600 mb-4`}>
+              <FiAlertTriangle className="h-6 w-6 mr-2" />
+              <h3 className="text-lg font-medium">
+                {statusDialog.newStatus ? 'Activate' : 'Deactivate'} Customer
+              </h3>
+            </div>
+            
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to {statusDialog.newStatus ? 'activate' : 'deactivate'} <span className="font-semibold">{statusDialog.customerName}</span>? 
+              {!statusDialog.newStatus && (
+                <span className="block mt-2 text-red-600">
+                  Deactivated customers will not be able to login or place orders.
+                </span>
+              )}
+            </p>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelStatusUpdate}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmStatusUpdate}
+                className={`px-4 py-2 bg-${statusDialog.newStatus ? 'green' : 'red'}-600 text-white rounded-lg hover:bg-${statusDialog.newStatus ? 'green' : 'red'}-700`}
+              >
+                {statusDialog.newStatus ? 'Activate' : 'Deactivate'}
               </button>
             </div>
           </div>
