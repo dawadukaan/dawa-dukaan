@@ -51,6 +51,7 @@ export async function POST(request) {
       type: user.type,
       role: isAdmin ? user.role : 'customer',
       model: isAdmin ? 'AdminUser' : 'User',
+      isActive: user.isActive,
       permissions: isAdmin ? user.permissions : null,
     };
     
@@ -64,6 +65,7 @@ export async function POST(request) {
         email: user.email,
         role: isAdmin ? user.role : 'customer',
         type: user.type,
+        isActive: user.isActive,
       },
       token
     });
