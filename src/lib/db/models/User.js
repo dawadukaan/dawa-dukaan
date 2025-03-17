@@ -72,6 +72,12 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     sparse: true, // Allows null/undefined values without unique constraint
   },
+  referralCommissionPercentage: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
+  },
   createdAt: {
     type: Date,
     default: Date.now,
