@@ -11,7 +11,8 @@ import {
   FiSearch, FiFilter, FiEye, FiDownload, FiEdit, 
   FiCalendar, FiChevronDown, FiChevronUp, FiX, FiLink,
   FiUser, FiMail, FiUsers, FiPercent, FiBarChart2,
-  FiClock, FiUserPlus, FiDollarSign, FiArrowRight, FiShare2, FiCopy, FiCheck
+  FiClock, FiUserPlus, FiDollarSign, FiArrowRight, FiShare2, FiCopy, FiCheck,
+  FiTrash2, FiAlertTriangle
 } from 'react-icons/fi';
 
 export default function ReferralsPage() {
@@ -43,6 +44,11 @@ export default function ReferralsPage() {
   const [commissionValue, setCommissionValue] = useState(0);
   const [editingCommissionId, setEditingCommissionId] = useState(null);
   const [inlineCommissionValue, setInlineCommissionValue] = useState(0);
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    referralId: null,
+    userName: ''
+  });
 
   // Fetch referrals data
   useEffect(() => {
@@ -340,6 +346,65 @@ export default function ReferralsPage() {
   // Add this function to cancel commission editing
   const cancelInlineCommission = () => {
     setEditingCommissionId(null);
+  };
+
+  // Add this function to handle delete click
+  const handleDeleteClick = (referral) => {
+    setDeleteDialog({
+      isOpen: true,
+      referralId: referral.id,
+      userName: referral.user?.name || 'Unknown User'
+    });
+  };
+
+  // Add this function to confirm deletion
+  const confirmDelete = async () => {
+    try {
+      const token = getCookie('token');
+      const response = await fetch(`${env.app.apiUrl}/admin/referrals/${deleteDialog.referralId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete referral');
+      }
+
+      // Remove the deleted referral from the state
+      setReferrals(referrals.filter(referral => referral.id !== deleteDialog.referralId));
+      
+      // Update the total count in pagination
+      setPagination({
+        ...pagination,
+        total: pagination.total - 1,
+        pages: Math.ceil((pagination.total - 1) / pagination.limit)
+      });
+      
+      // Show success message
+      toast.success(`Referral for "${deleteDialog.userName}" deleted successfully`);
+      
+      // Close the dialog
+      setDeleteDialog({
+        isOpen: false,
+        referralId: null,
+        userName: ''
+      });
+    } catch (error) {
+      console.error('Error deleting referral:', error);
+      toast.error(error.message || 'Failed to delete referral');
+    }
+  };
+
+  // Add this function to cancel deletion
+  const cancelDelete = () => {
+    setDeleteDialog({
+      isOpen: false,
+      referralId: null,
+      userName: ''
+    });
   };
 
   return (
@@ -731,6 +796,13 @@ export default function ReferralsPage() {
                         >
                           <FiUser className="w-4 h-4" />
                         </Link>
+                        <button
+                          onClick={() => handleDeleteClick(referral)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete referral"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -1139,6 +1211,44 @@ export default function ReferralsPage() {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteDialog.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 mx-4">
+            <div className="flex items-center text-red-600 mb-4">
+              <FiAlertTriangle className="h-6 w-6 mr-2" />
+              <h3 className="text-lg font-medium">Delete Referral</h3>
+            </div>
+            
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete the referral for <span className="font-semibold">{deleteDialog.userName}</span>? 
+              This action cannot be undone and will:
+              <ul className="list-disc ml-5 mt-2">
+                <li>Remove the referral record completely</li>
+                <li>Remove the referral code from the user's profile</li>
+                <li>Reset any commission percentage to 0</li>
+                <li>Break referral chains where this user is involved</li>
+              </ul>
+            </p>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Delete Referral
+              </button>
             </div>
           </div>
         </div>

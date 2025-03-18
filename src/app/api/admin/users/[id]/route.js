@@ -4,6 +4,9 @@ import { successResponse, errorResponse } from "@/lib/api/apiResponse";
 import { authenticateAdmin } from "@/lib/api/authMiddleware";
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import Address from "@/lib/db/models/Address";
+import Order from "@/lib/db/models/Order";
+import Referral from "@/lib/db/models/Referral";
 
 // GET /api/admin/users/[id] - Get a single user by ID
 export async function GET(request, { params }) {
@@ -102,32 +105,79 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE /api/admin/users/[id] - Delete a user
+// DELETE /api/admin/users/[id] - Delete a user and all related data
 export async function DELETE(request, { params }) {
   try {
     await dbConnect();
-    const { authenticated, response } = await authenticateAdmin(request);
     
+    // Authenticate as admin
+    const { authenticated, response } = await authenticateAdmin(request);
     if (!authenticated) {
       return response;
     }
     
     const { id } = params;
     
-    // Validate MongoDB ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return errorResponse("Invalid user ID", 400);
+    if (!id) {
+      return errorResponse("User ID is required", 400);
     }
     
-    const user = await User.findByIdAndDelete(id);
+    // Find the user first to ensure they exist
+    const user = await User.findById(id);
     
     if (!user) {
       return errorResponse("User not found", 404);
     }
     
-    return successResponse({ message: "User deleted successfully" });
+    // Start a session for transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      // 1. Delete all addresses associated with the user
+      await Address.deleteMany({ userId: id }, { session });
+      
+      // 2. Delete all orders associated with the user
+      await Order.deleteMany({ user: id }, { session });
+      
+      // 3. Delete all referrals where this user is either referred or referrer
+      // First, find any referral documents for this user
+      const userReferral = await Referral.findOne({ user: id }, null, { session });
+      
+      if (userReferral) {
+        // Delete the user's referral document
+        await Referral.findByIdAndDelete(userReferral._id, { session });
+      }
+      
+      // Update any referral documents where this user has referred others
+      await Referral.updateMany(
+        { "referees.user": id },
+        { $pull: { referees: { user: id } } },
+        { session }
+      );
+      
+      // 4. Delete the user
+      await User.findByIdAndDelete(id, { session });
+      
+      // Commit the transaction
+      await session.commitTransaction();
+      
+    } catch (error) {
+      // If an error occurs, abort the transaction
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      // End the session
+      session.endSession();
+    }
+    
+    return successResponse({ 
+      message: "User and all associated data deleted successfully",
+      deletedUserId: id
+    });
+    
   } catch (error) {
     console.error("Error deleting user:", error);
-    return errorResponse("Failed to delete user", 500);
+    return errorResponse("Failed to delete user: " + error.message, 500);
   }
 } 

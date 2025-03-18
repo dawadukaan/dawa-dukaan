@@ -339,7 +339,7 @@ export default function CustomersPage() {
       setCustomers(customers.filter(customer => customer.id !== deleteDialog.customerId));
       
       // Show success message
-      toast.success(`Customer "${deleteDialog.customerName}" deleted successfully`);
+      toast.success(`Customer "${deleteDialog.customerName}" and all associated data deleted successfully`);
       
       // Close the dialog
       setDeleteDialog({
@@ -831,7 +831,13 @@ export default function CustomersPage() {
             
             <p className="text-gray-700 mb-6">
               Are you sure you want to delete <span className="font-semibold">{deleteDialog.customerName}</span>? 
-              This action cannot be undone and will permanently remove the customer and all associated data.
+              This action cannot be undone and will permanently remove:
+              <ul className="list-disc ml-5 mt-2">
+                <li>The customer account</li>
+                <li>All customer addresses</li>
+                <li>All orders placed by this customer</li>
+                <li>Any referral relationships</li>
+              </ul>
             </p>
             
             <div className="flex justify-end space-x-3">
@@ -845,7 +851,7 @@ export default function CustomersPage() {
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
-                Delete
+                Delete Everything
               </button>
             </div>
           </div>
