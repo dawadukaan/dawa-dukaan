@@ -2,6 +2,7 @@
 import dbConnect from "@/lib/db/connect";
 import Order from "@/lib/db/models/Order";
 import Product from "@/lib/db/models/Product";
+import Cart from "@/lib/db/models/Cart";
 import { successResponse, errorResponse } from "@/lib/api/apiResponse";
 import { authenticateUser } from "@/lib/api/authMiddleware";
 import mongoose from "mongoose";
@@ -131,6 +132,16 @@ export async function POST(request) {
     
     const savedOrder = await newOrder.save();
     
+    // Clear the user's cart after successful order creation
+    await Cart.findOneAndUpdate(
+      { user: userId },
+      { 
+        items: [],
+        totalQuantity: 0,
+        totalPrice: 0
+      }
+    );
+    
     // Populate order details for response
     const populatedOrder = await Order.findById(savedOrder._id)
       .populate('shippingAddress')
@@ -149,9 +160,10 @@ export async function POST(request) {
     }
     
     return successResponse({
-      message: "Order placed successfully",
+      message: "Order placed successfully and cart cleared",
       order: populatedOrder,
-      paymentDetails
+      paymentDetails,
+      cartCleared: true
     }, 201);
     
   } catch (error) {

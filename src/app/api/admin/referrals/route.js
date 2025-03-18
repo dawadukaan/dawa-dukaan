@@ -41,7 +41,7 @@ export async function GET(request) {
     
     // Fetch referrals with pagination and populated fields
     const referrals = await Referral.find(query)
-      .populate('user', 'name email avatar')
+      .populate('user', 'name email avatar referralCommissionPercentage')
       .populate('referredBy', 'name email avatar')
       .populate('referees.user', 'name email avatar createdAt')
       .sort(sort)
@@ -57,7 +57,8 @@ export async function GET(request) {
         id: ref.user._id,
         name: ref.user.name,
         email: ref.user.email,
-        avatar: ref.user.avatar
+        avatar: ref.user.avatar,
+        referralCommissionPercentage: ref.user.referralCommissionPercentage || 0
       } : null,
       referredBy: ref.referredBy ? {
         id: ref.referredBy._id,

@@ -790,6 +790,13 @@ export default function ReferralsPage() {
                           <FiEye className="w-4 h-4" />
                         </button>
                         <Link
+                          href={`/dashboard/referrals/view-refrees/${referral.id}`}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="View referred users"
+                        >
+                          <FiUsers className="w-4 h-4" />
+                        </Link>
+                        <Link
                           href={`/dashboard/customers/view/${referral.user?.id}`}
                           className="text-blue-600 hover:text-blue-900"
                           title="View user profile"
@@ -1203,7 +1210,14 @@ export default function ReferralsPage() {
               )}
               
               {/* Actions Footer */}
-              <div className="mt-8 pt-6 border-t flex justify-end">
+              <div className="mt-8 pt-6 border-t flex justify-between">
+                <Link
+                  href={`/dashboard/referrals/view-refrees/${selectedReferral.id}`}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
+                >
+                  <FiUsers className="mr-2 h-4 w-4" />
+                  View All Referred Users & Orders
+                </Link>
                 <button
                   onClick={() => setShowDetailsModal(false)}
                   className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
