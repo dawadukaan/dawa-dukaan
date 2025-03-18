@@ -157,7 +157,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section - Add padding-top to account for fixed header */}
+      {/* Hero Section - Enhanced with referral mention */}
       <section className="relative h-[90vh] flex items-center pt-16 md:pt-20">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
@@ -181,8 +181,16 @@ export default function Home() {
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
               Quality Medicines <span className="text-blue-400">Delivered</span> To Your Doorstep
             </h1>
-            <p className="text-xl text-white/90 mb-8">
+            <p className="text-xl text-white/90 mb-3">
               Shop for prescription and over-the-counter medicines with special pricing for licensed healthcare professionals.
+            </p>
+            <p className="text-lg text-blue-300 mb-8">
+              <span className="inline-flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
+                </svg>
+                Join our Referral Program and earn commission on every referral!
+              </span>
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/shop" className="px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg text-center transition-colors">
@@ -206,7 +214,7 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             {/* Feature 1 */}
             <div className="bg-gray-50 rounded-xl p-8 text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -244,6 +252,118 @@ export default function Home() {
               <p className="text-gray-600">
                 Licensed healthcare professionals enjoy special pricing on all products.
               </p>
+            </div>
+            
+            {/* New feature highlighting the referral program */}
+            <div className="bg-blue-50 rounded-xl p-8 text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Referral Program</h3>
+              <p className="text-gray-600">
+                Earn commission when your friends and colleagues sign up and make purchases through your referral.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* New Section: Referral Program Highlight */}
+      <section className="py-20 bg-blue-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row items-center">
+            <div className="lg:w-1/2 mb-10 lg:mb-0 lg:pr-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Earn With Our Referral Program</h2>
+              <p className="text-xl text-gray-600 mb-6">
+                Recommend DavaDukaan to your network and earn commission on their purchases. It's simple:
+              </p>
+              
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                    <span className="text-blue-600 font-bold">1</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Sign Up & Get Your Code</h3>
+                    <p className="text-gray-600">Create an account and receive your unique referral code</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                    <span className="text-blue-600 font-bold">2</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Share With Others</h3>
+                    <p className="text-gray-600">Share your referral code with friends, colleagues and on social media</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                    <span className="text-blue-600 font-bold">3</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Earn Commission</h3>
+                    <p className="text-gray-600">Earn up to 10% commission when they make purchases</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-8">
+                <Link href="/register?ref=program" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg inline-flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Join Now
+                </Link>
+              </div>
+            </div>
+            
+            <div className="lg:w-1/2">
+              <div className="bg-white rounded-xl shadow-xl p-8 border border-blue-100">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Your Earnings</h3>
+                    <p className="text-gray-500">Example calculation</p>
+                  </div>
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+                
+                <div className="space-y-4 mb-6">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">10 Referrals who order</span>
+                    <span className="font-medium">₹2,000 each</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total Order Value</span>
+                    <span className="font-medium">₹20,000</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Your Commission (5%)</span>
+                    <span className="font-medium">₹1,000</span>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="flex justify-between">
+                      <span className="text-lg font-bold text-gray-900">Monthly Potential</span>
+                      <span className="text-lg font-bold text-blue-600">₹1,000+</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">Note:</span> Actual earnings depend on the number of referrals and their order values. The more they order, the more you earn!
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
