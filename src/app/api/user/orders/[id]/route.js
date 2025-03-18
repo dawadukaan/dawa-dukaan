@@ -1,9 +1,11 @@
 import dbConnect from "@/lib/db/connect";
 import Order from "@/lib/db/models/Order";
 import Product from "@/lib/db/models/Product";
+import User from "@/lib/db/models/Address";
 import { successResponse, errorResponse } from "@/lib/api/apiResponse";
 import { authenticateUser } from "@/lib/api/authMiddleware";
 import mongoose from "mongoose";
+
 
 // GET /api/user/orders/[id] (Get order details)
 export async function GET(request, { params }) {
