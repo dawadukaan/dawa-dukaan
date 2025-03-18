@@ -6,7 +6,6 @@ import { successResponse, errorResponse } from "@/lib/api/apiResponse";
 import { authenticateUser } from "@/lib/api/authMiddleware";
 import mongoose from "mongoose";
 
-
 // GET /api/user/orders/[id] (Get order details)
 export async function GET(request, { params }) {
   try {
