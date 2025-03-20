@@ -135,18 +135,58 @@ export default function CategoriesPage() {
   };
 
   const handleDeleteSelected = async () => {
-    if (confirm(`Are you sure you want to delete ${selectedCategories.length} categories?`)) {
+    if (confirm(`Are you sure you want to delete ${selectedCategories.length} categories? This action cannot be undone.`)) {
       setIsLoading(true);
       
       try {
-        // In a real implementation, you would call your API to delete the categories
-        // For now, we'll just filter them out from the state
-        setCategories(prev => prev.filter(category => !selectedCategories.includes(category.id)));
+        const token = getCookie('token');
+        const deletePromises = selectedCategories.map(async (categoryId) => {
+          const response = await fetch(`${env.app.apiUrl}/admin/categories/${categoryId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            return { 
+              id: categoryId, 
+              success: false, 
+              error: errorData.error || 'Failed to delete' 
+            };
+          }
+          
+          return { id: categoryId, success: true };
+        });
+        
+        const results = await Promise.all(deletePromises);
+        
+        // Count successes and failures
+        const successCount = results.filter(r => r.success).length;
+        const failures = results.filter(r => !r.success);
+        
+        // Update the categories list to remove successfully deleted categories
+        const deletedIds = results.filter(r => r.success).map(r => r.id);
+        setCategories(prev => prev.filter(category => !deletedIds.includes(category.id)));
+        
+        // Clear selected categories
         setSelectedCategories([]);
-        toast.success(`${selectedCategories.length} categories deleted successfully`);
+        
+        // Show appropriate message
+        if (successCount === selectedCategories.length) {
+          toast.success(`Successfully deleted ${successCount} categories`);
+        } else if (successCount > 0) {
+          toast.success(`Successfully deleted ${successCount} categories, but ${failures.length} failed`);
+          console.error('Failed deletions:', failures);
+        } else {
+          toast.error('Failed to delete any categories');
+          console.error('All deletions failed:', failures);
+        }
       } catch (error) {
-        console.error('Error deleting categories:', error);
-        toast.error('Failed to delete categories');
+        console.error('Error in bulk delete operation:', error);
+        toast.error('Failed to complete deletion process');
       } finally {
         setIsLoading(false);
       }
@@ -154,17 +194,39 @@ export default function CategoriesPage() {
   };
 
   const handleDeleteCategory = async (id) => {
-    if (confirm('Are you sure you want to delete this category?')) {
+    if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
       setIsLoading(true);
       
       try {
-        // In a real implementation, you would call your API to delete the category
-        // For now, we'll just filter it out from the state
+        const token = getCookie('token');
+        
+        const response = await fetch(`${env.app.apiUrl}/admin/categories/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to delete category');
+        }
+        
+        // Remove the category from the local state
         setCategories(prev => prev.filter(category => category.id !== id));
         toast.success('Category deleted successfully');
       } catch (error) {
         console.error('Error deleting category:', error);
-        toast.error('Failed to delete category');
+        
+        // Provide more specific error messages for common issues
+        if (error.message.includes('child categories')) {
+          toast.error('Cannot delete a category that has subcategories. Please delete or reassign the subcategories first.');
+        } else if (error.message.includes('associated products') || error.message.includes('products first')) {
+          toast.error('Cannot delete a category that has products. Please reassign the products first.');
+        } else {
+          toast.error(error.message || 'Failed to delete category');
+        }
       } finally {
         setIsLoading(false);
       }
