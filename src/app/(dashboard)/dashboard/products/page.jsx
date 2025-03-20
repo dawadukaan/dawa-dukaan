@@ -418,23 +418,55 @@ export default function ProductsPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {product.price && product.price.unlicensedPrice ? (
-                            <>₹{parseFloat(product.price.unlicensedPrice).toFixed(2)}</>
-                          ) : (
-                            <span className="text-gray-400">No price</span>
-                          )}
-                        </div>
-                        {product.salePrice && product.salePrice.unlicensedPrice && (
-                          <div className="text-xs text-gray-500 line-through">
-                            ₹{parseFloat(product.salePrice.unlicensedPrice).toFixed(2)}
+                        <div className="space-y-1">
+                          {/* Unlicensed Price */}
+                          <div>
+                            <span className="text-xs font-medium text-gray-500">Unlicensed:</span>
+                            <div className="text-sm text-gray-900">
+                              {product.salePrice && product.salePrice.unlicensedPrice ? (
+                                <>₹{parseFloat(product.salePrice.unlicensedPrice).toFixed(2)}</>
+                              ) : (
+                                <>₹{parseFloat(product.salePrice.unlicensedPrice).toFixed(2)}</>
+                              )}
+                              {product.price && product.price.unlicensedPrice && (
+                                <>
+                                  <span className="text-xs text-gray-500 line-through ml-1">
+                                    ₹{parseFloat(product.price.unlicensedPrice).toFixed(2)}
+                                  </span>
+                                  <span className="text-xs bg-red-100 text-red-800 px-1.5 py-0.5 rounded ml-1">
+                                    {product.discountPercentage?.unlicensedDiscount || 
+                                      Math.round(((product.price.unlicensedPrice - product.salePrice.unlicensedPrice) / 
+                                        product.price.unlicensedPrice) * 100)}% off
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        )}
-                        {product.discountPercentage && product.discountPercentage.unlicensedDiscount > 0 && (
-                          <span className="text-xs bg-red-100 text-red-800 px-1.5 py-0.5 rounded">
-                            {product.discountPercentage.unlicensedDiscount}% off
-                          </span>
-                        )}
+
+                          {/* Licensed Price */}
+                          <div className="border-t border-gray-100 pt-1">
+                            <span className="text-xs font-medium text-blue-500">Licensee:</span>
+                            <div className="text-sm text-blue-700">
+                              {product.salePrice && product.salePrice.licensedPrice ? (
+                                <>₹{parseFloat(product.salePrice.licensedPrice).toFixed(2)}</>
+                              ) : (
+                                <>₹{parseFloat(product.price.licensedPrice).toFixed(2)}</>
+                              )}
+                              {product.price && product.price.licensedPrice && (
+                                <>
+                                  <span className="text-xs text-gray-500 line-through ml-1">
+                                    ₹{parseFloat(product.price.licensedPrice).toFixed(2)}
+                                  </span>
+                                  <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded ml-1">
+                                    {product.discountPercentage?.licensedDiscount || 
+                                      Math.round(((product.price.licensedPrice - product.salePrice.licensedPrice) / 
+                                        product.price.licensedPrice) * 100)}% off
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`text-sm ${product.stock === 0 ? 'text-red-600' : product.stock < 10 ? 'text-yellow-600' : 'text-green-600'}`}>
