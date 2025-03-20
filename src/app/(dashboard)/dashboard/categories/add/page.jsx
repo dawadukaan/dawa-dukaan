@@ -166,13 +166,13 @@ export default function AddCategoryPage() {
       
       const data = await response.json();
       
-      if (data.success && data.url) {
-        console.log('Upload successful, image URL:', data.url);
+      if (data.success && data.data.url) {
+        console.log('Upload successful, image URL:', data.data.url);
         
         // Set the category image URL
         setCategory(prev => ({
           ...prev,
-          image: data.url
+          image: data.data.url
         }));
         
         toast.success('Image uploaded successfully');
