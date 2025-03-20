@@ -418,7 +418,7 @@ export default function AddProductPage() {
       formData.append('fileName', fileName);
       formData.append('folder', 'product-images'); // Store in a different folder
       
-      const response = await fetch('/api/upload', {
+      const response = await fetch(`${env.app.apiUrl}/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -433,12 +433,13 @@ export default function AddProductPage() {
       setUploadProgress(100);
       
       const data = await response.json();
+      console.log('Upload response:', data);
       
-      if (data.success && data.url) {
-        console.log('Upload successful, image URL:', data.url);
+      if (data.success && data.data.url) {
+        console.log('Upload successful, image URL:', data.data.url);
         
         // Add the image URL to the product images array
-        const updatedImages = [...product.images, data.url];
+        const updatedImages = [...product.images, data.data.url];
         setProduct({
           ...product,
           images: updatedImages
@@ -446,6 +447,7 @@ export default function AddProductPage() {
         
         toast.success('Image uploaded successfully');
       } else {
+        console.log('Upload failed:', data);
         throw new Error(data.error || 'Failed to upload image');
       }
     } catch (error) {
@@ -486,6 +488,24 @@ export default function AddProductPage() {
     const salePrice = parseFloat(sale);
     if (regularPrice <= 0 || salePrice <= 0 || salePrice >= regularPrice) return 0;
     return Math.round(((regularPrice - salePrice) / regularPrice) * 100);
+  };
+
+  const navigateToNextTab = () => {
+    const tabs = ['basic', 'pricing', 'images', 'inventory', 'medicine', 'additional'];
+    const currentIndex = tabs.indexOf(activeTab);
+    
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1]);
+    }
+  };
+
+  const navigateToPreviousTab = () => {
+    const tabs = ['basic', 'pricing', 'images', 'inventory', 'medicine', 'additional'];
+    const currentIndex = tabs.indexOf(activeTab);
+    
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1]);
+    }
   };
 
   return (
@@ -847,6 +867,21 @@ export default function AddProductPage() {
                   <option value="published">Published</option>
                 </select>
               </div>
+
+              {/* Navigation buttons */}
+              <div className="pt-6 border-t flex justify-between">
+                <div></div> {/* Empty div to maintain spacing */}
+                <button
+                  type="button"
+                  onClick={navigateToNextTab}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                >
+                  Next: Pricing
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
           
@@ -992,6 +1027,30 @@ export default function AddProductPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Navigation buttons */}
+              <div className="pt-6 border-t flex justify-between">
+                <button
+                  type="button"
+                  onClick={navigateToPreviousTab}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                  Previous: Basic
+                </button>
+                <button
+                  type="button"
+                  onClick={navigateToNextTab}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                >
+                  Next: Images
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
           
@@ -1133,6 +1192,30 @@ export default function AddProductPage() {
                   <li>The first image will be used as the product thumbnail</li>
                 </ul>
               </div>
+
+              {/* Navigation buttons */}
+              <div className="pt-6 border-t flex justify-between">
+                <button
+                  type="button"
+                  onClick={navigateToPreviousTab}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                  Previous: Pricing
+                </button>
+                <button
+                  type="button"
+                  onClick={navigateToNextTab}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                >
+                  Next: Inventory
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
           
@@ -1203,6 +1286,30 @@ export default function AddProductPage() {
                   <li>Consider setting a minimum stock threshold for reordering</li>
                   <li>For prescription medicines, ensure proper inventory tracking</li>
                 </ul>
+              </div>
+
+              {/* Navigation buttons */}
+              <div className="pt-6 border-t flex justify-between">
+                <button
+                  type="button"
+                  onClick={navigateToPreviousTab}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                  Previous: Images
+                </button>
+                <button
+                  type="button"
+                  onClick={navigateToNextTab}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                >
+                  Next: Medicine Details
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
               </div>
             </div>
           )}
@@ -1313,6 +1420,30 @@ export default function AddProductPage() {
                   Add each active ingredient with its quantity
                 </p>
               </div>
+
+              {/* Navigation buttons */}
+              <div className="pt-6 border-t flex justify-between">
+                <button
+                  type="button"
+                  onClick={navigateToPreviousTab}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                  Previous: Inventory
+                </button>
+                <button
+                  type="button"
+                  onClick={navigateToNextTab}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                >
+                  Next: Additional Info
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
           
@@ -1403,24 +1534,42 @@ export default function AddProductPage() {
                   </ul>
                 </div>
               </div>
+
+              {/* Navigation buttons */}
+              <div className="pt-6 border-t flex justify-between">
+                <button
+                  type="button"
+                  onClick={navigateToPreviousTab}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                  Previous: Medicine Details
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <FiSave className="w-5 h-5 mr-2" />
+                      Create Product
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
-          
-          <div className="pt-6 border-t flex justify-end space-x-3">
-            <Link
-              href="/dashboard/products"
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-            >
-              {isSaving ? 'Creating...' : 'Create Product'}
-            </button>
-          </div>
         </form>
       </div>
     </div>
