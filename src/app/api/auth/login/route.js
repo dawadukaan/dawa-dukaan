@@ -56,7 +56,7 @@ export async function POST(request) {
     };
     
     // Generate token
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1y' }); // 1 year
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' }); // 30 days
     
     return successResponse({
       user: {
