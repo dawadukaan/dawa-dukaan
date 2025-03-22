@@ -94,8 +94,10 @@ export default function AdminLoginPage() {
       // Set the token in a cookie
       if (data.data && data.data.token) {
         setCookie('token', data.data.token, {
-          maxAge: 30 * 24 * 60 * 60, // 30 days
-          path: '/'
+          maxAge: 30 * 24 * 60 * 60, // 30 days - same as JWT expiration
+          path: '/',
+          sameSite: 'strict', // Enhance security
+          secure: process.env.NODE_ENV === 'production' // Use secure in production
         });
         
         // Store user data in localStorage for easy access

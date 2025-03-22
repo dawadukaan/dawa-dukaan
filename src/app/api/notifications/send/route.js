@@ -9,14 +9,24 @@ import { successResponse, errorResponse } from '@/lib/api/apiResponse';
 export async function POST(request) {
   try {
     await dbConnect();
+    
     // Authenticate admin
-    const { authenticated, authResponse } = await authenticateAdmin(request);
+    const { authenticated, response: authResponse } = await authenticateAdmin(request);
     
     if (!authenticated) {
       return authResponse;
     }
     
-    const { userId, title, body, data } = await request.json();
+    // Parse request body with error handling
+    let requestData;
+    try {
+      requestData = await request.json();
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return errorResponse('Invalid JSON in request body', 400);
+    }
+    
+    const { userId, title, body, data } = requestData || {};
     
     if (!title || !body) {
       return errorResponse('Title and body are required', 400);
@@ -24,43 +34,74 @@ export async function POST(request) {
     
     let tokens = [];
     
-    // If userId is provided, send to specific user
-    if (userId) {
-      const fcmTokens = await FCMToken.find({ user: userId });
-      tokens = fcmTokens.map(t => t.token);
-      
-      if (tokens.length === 0) {
-        return errorResponse('No FCM tokens found for this user', 404);
+    try {
+      // If userId is provided, send to specific user
+      if (userId) {
+        const fcmTokens = await FCMToken.find({ user: userId });
+        tokens = fcmTokens.map(t => t.token);
+        
+        if (tokens.length === 0) {
+          return errorResponse('No FCM tokens found for this user', 404);
+        }
+      } else {
+        // Send to all users (admin broadcast)
+        const fcmTokens = await FCMToken.find({});
+        tokens = fcmTokens.map(t => t.token);
+        
+        if (tokens.length === 0) {
+          return errorResponse('No FCM tokens found', 404);
+        }
       }
-    } else {
-      // Send to all users (admin broadcast)
-      const fcmTokens = await FCMToken.find({});
-      tokens = fcmTokens.map(t => t.token);
       
-      if (tokens.length === 0) {
-        return errorResponse('No FCM tokens found', 404);
+      // Check if Firebase admin is properly initialized
+      if (!admin) {
+        console.error('Firebase admin module is not properly imported');
+        return errorResponse('Notification service configuration error', 500);
       }
-    }
-    
-    // Prepare notification message
-    const message = {
-      notification: {
-        title,
-        body,
-      },
-      data: data || {},
-      tokens: tokens,
-    };
-    
-    // Send the message
-    const response = await admin.messaging().sendMulticast(message);
-    
-    // Handle failed tokens
-    if (response.failureCount > 0) {
+      
+      const messaging = admin.messaging();
+      
+      if (!messaging) {
+        console.error('Firebase messaging is not available');
+        return errorResponse('Firebase messaging service is not available', 500);
+      }
+      
+      // Prepare notification message
+      const message = {
+        notification: {
+          title,
+          body,
+        },
+        data: data || {},
+      };
+      
+      // Send to each token individually since sendMulticast may not be available
+      const sendPromises = tokens.map(token => {
+        try {
+          return messaging.send({
+            ...message,
+            token: token
+          });
+        } catch (err) {
+          console.error(`Error sending to token ${token}:`, err);
+          return Promise.resolve({ success: false, token });
+        }
+      });
+      
+      const results = await Promise.allSettled(sendPromises);
+      
+      // Process results
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedResults = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.success === false));
+      const failureCount = failedResults.length;
+      
+      // Extract failed tokens
       const failedTokens = [];
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
+      failedResults.forEach((result, idx) => {
+        if (result.status === 'rejected') {
           failedTokens.push(tokens[idx]);
+        } else if (result.status === 'fulfilled' && result.value.success === false) {
+          failedTokens.push(result.value.token);
         }
       });
       
@@ -68,13 +109,16 @@ export async function POST(request) {
       if (failedTokens.length > 0) {
         await FCMToken.deleteMany({ token: { $in: failedTokens } });
       }
+      
+      return successResponse({
+        message: 'Notifications processed',
+        success: successCount,
+        failure: failureCount,
+      });
+    } catch (innerError) {
+      console.error('Error in notification processing:', innerError);
+      return errorResponse(`Notification error: ${innerError.message}`, 500);
     }
-    
-    return successResponse({
-      message: 'Notifications sent successfully',
-      success: response.successCount,
-      failure: response.failureCount,
-    });
   } catch (error) {
     console.error('Error sending notifications:', error);
     return errorResponse('Failed to send notifications', 500);

@@ -8,12 +8,12 @@ export function middleware(request) {
   const token = request.cookies.get('token')?.value;
   
   // If accessing dashboard routes and no token exists, redirect to login
-  if (path.startsWith('/dashboard') && !token) {
+  if (path.startsWith('/dashboard') && (!token || token === '')) {
     return NextResponse.redirect(new URL('/admin/login', request.url));
   }
   
   // If accessing admin login page and token exists, redirect to dashboard
-  if (path === '/admin/login' && token) {
+  if (path === '/admin/login' && token && token !== '') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
   

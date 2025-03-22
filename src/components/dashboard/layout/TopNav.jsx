@@ -92,17 +92,48 @@ export function TopNav({ onToggleSidebar }) {
   }, []);
 
   const handleLogout = () => {
-    // Delete the auth token cookie
-    deleteCookie('token');
-    
-    // Clear localStorage
-    localStorage.removeItem('userData');
-    
-    // Show success message
-    toast.success('Logged out successfully');
-    
-    // Redirect to login page
-    router.push('/admin/login');
+    try {
+      // Show a loading indicator
+      const loadingToast = toast.loading('Logging out...');
+      
+      // Important: Delete the token cookie with proper options
+      deleteCookie('token', { 
+        path: '/',
+        domain: window.location.hostname,
+        sameSite: 'strict'
+      });
+      
+      // Clear any user data from localStorage
+      localStorage.removeItem('userData');
+      
+      // Clear any other auth-related items
+      sessionStorage.clear();
+      
+      // Dismiss loading indicator and show success message
+      toast.dismiss(loadingToast);
+      toast.success('Logged out successfully');
+      
+      // Force a complete page refresh to the login page
+      // This is more reliable than Next.js router
+      window.location.replace('/admin/login');
+      
+      // Add a small delay before redirect to ensure cookies are cleared
+      setTimeout(() => {
+        if (document.cookie.includes('token')) {
+          console.error('Cookie still exists, forcing reload');
+          document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          window.location.replace('/admin/login');
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Something went wrong during logout');
+      
+      // Fallback clearing in case of error
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      localStorage.removeItem('userData');
+      window.location.replace('/admin/login');
+    }
   };
 
   return (

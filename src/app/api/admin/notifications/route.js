@@ -4,6 +4,7 @@ import Notification from '@/lib/db/models/Notification';
 import { authenticateAdmin } from '@/lib/api/authMiddleware';
 import { successResponse, errorResponse } from '@/lib/api/apiResponse';
 
+// Get all notifications api endpoint == /api/admin/notifications
 export async function GET(request) {
   try {
     await dbConnect();
