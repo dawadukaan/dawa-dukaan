@@ -63,6 +63,7 @@ export async function POST(request) {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
+        avatar: user.avatar,
         role: isAdmin ? user.role : 'customer',
         type: user.type,
         isActive: user.isActive,
