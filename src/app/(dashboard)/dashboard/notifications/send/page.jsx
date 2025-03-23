@@ -51,16 +51,12 @@ export default function SendNotificationPage() {
   const [fcmTokens, setFcmTokens] = useState([]);
   const [tokensByUser, setTokensByUser] = useState([]);
   const [tokenStats, setTokenStats] = useState({ totalTokens: 0, uniqueUsers: 0 });
-  const [recipientSource, setRecipientSource] = useState('users'); // 'users' or 'tokens'
+  const [recipientSource, setRecipientSource] = useState('tokens'); // Changed default to 'tokens'
   
-  // Fetch users on component mount
+  // Fetch tokens on component mount - we don't need the conditional anymore
   useEffect(() => {
-    if (recipientSource === 'tokens') {
-      fetchFCMTokens();
-    } else {
-      fetchUsers();
-    }
-  }, [token, recipientSource]);
+    fetchFCMTokens();
+  }, [token]);
   
   // Filter users when filters change
   useEffect(() => {
@@ -241,6 +237,11 @@ export default function SendNotificationPage() {
       return;
     }
     
+    if (tokenStats.uniqueUsers === 0) {
+      setError('No users with device tokens found. Cannot send notifications.');
+      return;
+    }
+    
     setIsSending(true);
     setError(null);
     setSuccess(null);
@@ -257,41 +258,34 @@ export default function SendNotificationPage() {
         }
       };
       
-      // Add token information based on recipient type and source
+      // Add token information based on recipient type
       if (recipientType === 'specific' && selectedUsers.length > 0) {
-        if (recipientSource === 'tokens') {
-          // Find all tokens for selected users
-          const selectedTokens = [];
-          const selectedUserTokens = {};
-          
-          // Create a map of userId -> tokens
-          selectedUsers.forEach(userId => {
-            const userTokenData = tokensByUser.find(item => item.user._id === userId);
-            if (userTokenData && userTokenData.tokens.length > 0) {
-              selectedUserTokens[userId] = userTokenData.tokens.map(t => t.token);
-              selectedTokens.push(...userTokenData.tokens.map(t => t.token));
-            }
-          });
-          
-          if (selectedTokens.length === 0) {
-            throw new Error('None of the selected users have registered notification tokens');
+        // Find all tokens for selected users
+        const selectedTokens = [];
+        const selectedUserTokens = {};
+        
+        // Create a map of userId -> tokens
+        selectedUsers.forEach(userId => {
+          const userTokenData = tokensByUser.find(item => item.user._id === userId);
+          if (userTokenData && userTokenData.tokens.length > 0) {
+            selectedUserTokens[userId] = userTokenData.tokens.map(t => t.token);
+            selectedTokens.push(...userTokenData.tokens.map(t => t.token));
           }
-          
-          // Send tokens directly in the payload
-          payload.tokens = selectedTokens;
-          payload.userTokens = selectedUserTokens;
-          payload.userIds = selectedUsers;
-        } else {
-          // Standard user selection (without tokens)
-          payload.userIds = selectedUsers;
+        });
+        
+        if (selectedTokens.length === 0) {
+          throw new Error('None of the selected users have registered notification tokens');
         }
+        
+        // Send tokens directly in the payload
+        payload.tokens = selectedTokens;
+        payload.userTokens = selectedUserTokens;
+        payload.userIds = selectedUsers;
       } else if (recipientType === 'all') {
-        if (recipientSource === 'tokens') {
-          // Send all available tokens directly
-          const allTokens = fcmTokens.map(t => t.token);
-          payload.tokens = allTokens;
-          payload.onlyWithTokens = true;
-        }
+        // Send all available tokens directly
+        const allTokens = fcmTokens.map(t => t.token);
+        payload.tokens = allTokens;
+        payload.onlyWithTokens = true;
       }
       
       console.log('Sending notification with payload:', payload);
@@ -413,45 +407,27 @@ export default function SendNotificationPage() {
                 onChange={(e) => setNotificationType(e.target.value)}
                 className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="info">Information</option>
                 <option value="alert">Alert</option>
-                <option value="system">System</option>
-                <option value="feature">Feature Update</option>
-                <option value="promotion">Promotion</option>
-                <option value="event">Event</option>
+                <option value="order">Order</option>
+                <option value="message">Message</option>
               </select>
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Recipient Source
+                Recipient Information
               </label>
-              <div className="flex gap-4 mb-3">
-                <div className="flex items-center">
-                  <input
-                    id="all-registered"
-                    name="recipient-source"
-                    type="radio"
-                    checked={recipientSource === 'users'}
-                    onChange={() => setRecipientSource('users')}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="all-registered" className="ml-2 block text-sm text-gray-700 flex items-center">
-                    <FiUsers className="mr-1" /> All Registered Users
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    id="device-tokens"
-                    name="recipient-source"
-                    type="radio"
-                    checked={recipientSource === 'tokens'}
-                    onChange={() => setRecipientSource('tokens')}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="device-tokens" className="ml-2 block text-sm text-gray-700 flex items-center">
-                    <FiCheckCircle className="mr-1" /> Only Users with Device Tokens ({tokenStats.uniqueUsers})
-                  </label>
+              <div className="p-3 bg-blue-50 text-blue-700 rounded-lg text-sm mb-3">
+                <div className="flex items-start">
+                  <FiInfo className="mt-0.5 mr-2 flex-shrink-0" />
+                  <div>
+                    <p><strong>Showing only users with registered device tokens.</strong></p>
+                    <p className="mt-1">
+                      {tokenStats.uniqueUsers > 0 
+                        ? `These ${tokenStats.uniqueUsers} users have ${tokenStats.totalTokens} devices registered that can receive notifications.`
+                        : "No users with registered devices found. Users must have the app installed to receive notifications."}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -645,80 +621,61 @@ export default function SendNotificationPage() {
                   <p className="text-xs text-gray-400">Try adjusting your filters</p>
                 </div>
               ) : (
-                <ul className="divide-y divide-gray-200">
-                  {filteredUsers.map(user => (
-                    <li key={user._id} className="px-4 py-3 hover:bg-gray-50">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4"
-                          checked={selectedUsers.includes(user._id)}
-                          onChange={() => handleUserSelect(user._id)}
-                        />
-                        <div className="ml-3 flex-1">
-                          <div className="flex justify-between">
-                            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                            <div className="flex space-x-2">
-                              {user.type === 'licensee' && (
-                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                  Licensee
-                                </span>
-                              )}
-                              {recipientSource === 'tokens' && user.tokenCount && (
-                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                  {user.tokenCount} {user.tokenCount === 1 ? 'Device' : 'Devices'}
-                                </span>
-                              )}
-                              {!user.isActive && (
-                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                  Inactive
-                                </span>
-                              )}
+                <>
+                  {tokenStats.uniqueUsers === 0 && (
+                    <div className="py-8 text-center bg-yellow-50 rounded-lg my-4">
+                      <FiAlertTriangle className="h-8 w-8 text-yellow-500 mx-auto" />
+                      <p className="mt-2 text-sm font-medium text-yellow-700">No users with device tokens found</p>
+                      <p className="text-xs text-yellow-600 mt-1 max-w-md mx-auto">
+                        Users must install the app and allow notifications to receive them. 
+                        Database notifications will still be created but push notifications can't be delivered.
+                      </p>
+                    </div>
+                  )}
+                  <ul className="divide-y divide-gray-200">
+                    {filteredUsers.map(user => (
+                      <li key={user._id} className="px-4 py-3 hover:bg-gray-50">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4"
+                            checked={selectedUsers.includes(user._id)}
+                            onChange={() => handleUserSelect(user._id)}
+                          />
+                          <div className="ml-3 flex-1">
+                            <div className="flex justify-between">
+                              <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                              <div className="flex space-x-2">
+                                {user.type === 'licensee' && (
+                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    Licensee
+                                  </span>
+                                )}
+                                {recipientSource === 'tokens' && user.tokenCount && (
+                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    {user.tokenCount} {user.tokenCount === 1 ? 'Device' : 'Devices'}
+                                  </span>
+                                )}
+                                {!user.isActive && (
+                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    Inactive
+                                  </span>
+                                )}
+                              </div>
                             </div>
+                            <p className="text-sm text-gray-500">{user.email}</p>
+                            {user.phone && (
+                              <p className="text-xs text-gray-400">{user.phone}</p>
+                            )}
                           </div>
-                          <p className="text-sm text-gray-500">{user.email}</p>
-                          {user.phone && (
-                            <p className="text-xs text-gray-400">{user.phone}</p>
-                          )}
                         </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
             </div>
           </div>
-          
-          {/* Add a helper message based on recipient source */}
-          {recipientSource === 'tokens' && (
-            <div className="mt-2 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm">
-              <div className="flex items-start">
-                <FiInfo className="mt-0.5 mr-2 flex-shrink-0" />
-                <div>
-                  <p><strong>Showing only users with registered device tokens.</strong></p>
-                  <p className="mt-1">
-                    These {tokenStats.uniqueUsers} users have {tokenStats.totalTokens} devices registered 
-                    that can receive notifications.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {recipientSource === 'users' && (
-            <div className="mt-2 p-3 bg-yellow-50 text-yellow-700 rounded-lg text-sm">
-              <div className="flex items-start">
-                <FiInfo className="mt-0.5 mr-2 flex-shrink-0" />
-                <div>
-                  <p><strong>Showing all registered users.</strong></p>
-                  <p className="mt-1">
-                    Note that some users might not have registered devices and won't 
-                    receive push notifications.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

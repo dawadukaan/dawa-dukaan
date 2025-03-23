@@ -14,13 +14,14 @@ const NotificationSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  type: {
+    type: String,
+    enum: ['alert', 'order', 'message'],
+    required: true,
+  },
   data: {
     type: Object,
     default: {},
-  },
-  read: {
-    type: Boolean,
-    default: false,
   },
   createdAt: {
     type: Date,
@@ -30,6 +31,6 @@ const NotificationSchema = new mongoose.Schema({
 });
 
 // Create index for faster queries
-NotificationSchema.index({ user: 1, read: 1, createdAt: -1 });
+NotificationSchema.index({ user: 1, createdAt: -1 });
 
 export default mongoose.models.Notification || mongoose.model('Notification', NotificationSchema);
