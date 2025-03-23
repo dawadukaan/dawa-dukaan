@@ -12,8 +12,6 @@ import {
   FiTrash2, 
   FiEye, 
   FiChevronDown,
-  FiDownload,
-  FiUpload,
   FiAlertCircle
 } from 'react-icons/fi';
 import { StatusBadge } from '@/components/dashboard/ui/StatusBadge';
@@ -29,7 +27,6 @@ export default function ProductsPage() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [showFilters, setShowFilters] = useState(false);
   const [stockFilter, setStockFilter] = useState('all');
-  const [selectedProducts, setSelectedProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [categories, setCategories] = useState(['All']);
   const [pagination, setPagination] = useState({
@@ -135,41 +132,6 @@ export default function ProductsPage() {
     } else {
       setSortBy(field);
       setSortOrder('asc');
-    }
-  };
-
-  const toggleProductSelection = (id) => {
-    setSelectedProducts(prev => 
-      prev.includes(id) 
-        ? prev.filter(productId => productId !== id)
-        : [...prev, id]
-    );
-  };
-
-  const toggleAllProducts = () => {
-    if (selectedProducts.length === filteredProducts.length) {
-      setSelectedProducts([]);
-    } else {
-      setSelectedProducts(filteredProducts.map(p => p._id));
-    }
-  };
-
-  const handleDeleteSelected = async () => {
-    if (confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
-      setIsLoading(true);
-      
-      try {
-        // In a real implementation, you would call your API to delete the products
-        // For now, we'll just filter them out from the state
-        setProducts(prev => prev.filter(product => !selectedProducts.includes(product._id)));
-        setSelectedProducts([]);
-        toast.success(`${selectedProducts.length} products deleted successfully`);
-      } catch (error) {
-        console.error('Error deleting products:', error);
-        toast.error('Failed to delete products');
-      } finally {
-        setIsLoading(false);
-      }
     }
   };
 
@@ -344,27 +306,6 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {/* Bulk Actions */}
-      {selectedProducts.length > 0 && (
-        <div className="bg-blue-50 p-4 rounded-lg flex justify-between items-center">
-          <span className="text-blue-700 font-medium">{selectedProducts.length} products selected</span>
-          <div className="flex gap-2">
-            <button 
-              className="bg-white text-gray-700 border border-gray-300 px-3 py-1 rounded hover:bg-gray-50"
-              onClick={() => setSelectedProducts([])}
-            >
-              Cancel
-            </button>
-            <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">
-              <FiDownload className="inline mr-1" /> Export
-            </button>
-            <button className="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200" onClick={handleDeleteSelected}>
-              <FiTrash2 className="inline mr-1" /> Delete
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Products Table */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {isLoading ? (
@@ -377,14 +318,6 @@ export default function ProductsPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <input 
-                      type="checkbox" 
-                      className="rounded text-green-600 focus:ring-green-500 h-4 w-4"
-                      checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
-                      onChange={toggleAllProducts}
-                    />
-                  </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Product
                   </th>
@@ -409,14 +342,6 @@ export default function ProductsPage() {
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((product) => (
                     <tr key={product._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input 
-                          type="checkbox" 
-                          className="rounded text-green-600 focus:ring-green-500 h-4 w-4"
-                          checked={selectedProducts.includes(product._id)}
-                          onChange={() => toggleProductSelection(product._id)}
-                        />
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0 rounded-md bg-gray-200 overflow-hidden">
@@ -536,7 +461,7 @@ export default function ProductsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="px-6 py-10 text-center text-gray-500">
+                    <td colSpan="6" className="px-6 py-10 text-center text-gray-500">
                       No products found matching your criteria
                     </td>
                   </tr>
