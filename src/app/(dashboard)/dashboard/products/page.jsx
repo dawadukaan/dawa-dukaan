@@ -173,6 +173,38 @@ export default function ProductsPage() {
     }
   };
 
+  // Add this function to handle individual product deletion
+  const handleDeleteProduct = async (productId, productName) => {
+    if (confirm(`Are you sure you want to delete "${productName}"?`)) {
+      const token = getCookie('token');
+      setIsLoading(true);
+      
+      try {
+        const response = await fetch(`${env.app.apiUrl}/admin/products/${productId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to delete product');
+        }
+        
+        // Remove the deleted product from the state
+        setProducts(prev => prev.filter(product => product._id !== productId));
+        toast.success(`Product "${productName}" deleted successfully`);
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        toast.error(error.message || 'Failed to delete product');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -492,7 +524,10 @@ export default function ProductsPage() {
                           <Link href={`/dashboard/products/edit/${product._id}`} className="text-blue-600 hover:text-blue-900">
                             <FiEdit2 className="w-5 h-5" />
                           </Link>
-                          <button className="text-red-600 hover:text-red-900">
+                          <button 
+                            className="text-red-600 hover:text-red-900"
+                            onClick={() => handleDeleteProduct(product._id, product.name)}
+                          >
                             <FiTrash2 className="w-5 h-5" />
                           </button>
                         </div>
