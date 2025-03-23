@@ -4,54 +4,58 @@
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// Initialize the Firebase app in the service worker by passing in
-// your app's Firebase config object.
+// Initialize the Firebase app in the service worker
 firebase.initializeApp({
-  apiKey: 'your-api-key',
-  authDomain: 'your-project-id.firebaseapp.com',
-  projectId: 'your-project-id',
-  storageBucket: 'your-project-id.appspot.com',
-  messagingSenderId: 'your-messaging-sender-id',
-  appId: 'your-app-id',
-  measurementId: 'your-measurement-id'
+  apiKey: "AIzaSyAikPsff9H4ECVpEGOS_j_8X3T1lgPKsv4",
+  authDomain: "dawa-dukaan-4d91a.firebaseapp.com",
+  projectId: "dawa-dukaan-4d91a",
+  storageBucket: "dawa-dukaan-4d91a.appspot.com", // Fixed storage bucket URL
+  messagingSenderId: "833840555661",
+  appId: "1:833840555661:web:783387906b8868f0c064c4"
 });
 
-// Retrieve an instance of Firebase Messaging so that it can handle background
-// messages.
+// Retrieve an instance of Firebase Messaging
 const messaging = firebase.messaging();
 
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
   
-  const notificationTitle = payload.notification.title;
+  // Customize notification here
+  const notificationTitle = payload.notification?.title || 'New Notification';
   const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/logo192.png'
+    body: payload.notification?.body || '',
+    icon: '/images/logo.png'
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Optional: Add additional service worker functionality here
+
+
+// Handle notification click
 self.addEventListener('notificationclick', (event) => {
   console.log('[Service Worker] Notification click received:', event);
   
   event.notification.close();
   
-  // This looks to see if the current is already open and
-  // focuses if it is
+  // This looks to see if the current window is already open and focuses it
   event.waitUntil(
     clients.matchAll({
-      type: 'window'
+      type: 'window',
+      includeUncontrolled: true
     })
     .then((clientList) => {
       for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client)
+        if ('focus' in client) {
           return client.focus();
+        }
       }
-      if (clients.openWindow)
-        return clients.openWindow('/');
+      
+      // If no window is open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow('/dashboard');
+      }
     })
   );
 });

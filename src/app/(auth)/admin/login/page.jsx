@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { setCookie, getCookie } from 'cookies-next';
+import { registerAdminFCMToken } from '@/lib/fcm/adminTokenManager';
+import { requestNotificationPermission } from '@/lib/firebase/firebase';
 
 export default function AdminLoginPage() {
   const [formData, setFormData] = useState({
@@ -114,8 +116,10 @@ export default function AdminLoginPage() {
         duration: 3000,
       });
       
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Call registerFCMToken without await - it will handle navigation internally
+      registerFCMToken(data.data.user.id).catch(err => {
+        console.error('FCM registration error (non-blocking):', err);
+      });
       
     } catch (error) {
       console.error('Login error:', error);
@@ -125,6 +129,59 @@ export default function AdminLoginPage() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Update the registerFCMToken function
+  const registerFCMToken = async (userId) => {
+    try {
+      console.log("Starting FCM token registration process...");
+      
+      // Check if notifications are supported in this browser
+      if (!("Notification" in window)) {
+        console.warn("This browser does not support notifications");
+        return;
+      }
+      
+      // First navigate to dashboard to avoid blocking
+      router.push('/dashboard');
+      
+      // Delay the notification permission request to ensure it doesn't block navigation
+      setTimeout(async () => {
+        try {
+          // Get FCM token using Firebase utility
+          const token = await requestNotificationPermission();
+          
+          if (token) {
+            // Get device info
+            const deviceInfo = {
+              browser: navigator.userAgent.match(/(firefox|msie|chrome|safari|trident)/i)?.[1] || 'Unknown',
+              os: navigator.userAgent.match(/windows|mac|linux|android|iphone|ipad/i)?.[0] || 'Unknown',
+              name: `Admin Dashboard (${window.innerWidth}x${window.innerHeight})`
+            };
+            
+            // Register the token with the server
+            const result = await registerAdminFCMToken(token, deviceInfo);
+            console.log('FCM token registration result:', result);
+            
+            toast.success('Notifications enabled for this device', {
+              duration: 3000,
+              icon: '🔔'
+            });
+          }
+        } catch (error) {
+          console.error('Error in FCM token registration process:', error);
+          // Only show error for permission denied, not for technical errors
+          if (error.message.includes('permission')) {
+            toast.error('To receive notifications, please enable them in your browser settings.', {
+              duration: 5000,
+            });
+          }
+        }
+      }, 1000); // Delay by 1 second
+      
+    } catch (error) {
+      console.error('Error in FCM token registration outer process:', error);
     }
   };
 

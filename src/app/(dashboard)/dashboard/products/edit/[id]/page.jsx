@@ -755,23 +755,30 @@ export default function EditProductPage() {
                         value={product.quantityUnit}
                         onChange={handleChange}
                       >
-                        <option value="tab">Tablets (tab)</option>
-                        <option value="cap">Capsules (cap)</option>
+                        <option value="tab">Tablet (tab)</option>
+                        <option value="tablets">Tablets (tablets)</option>
+                        <option value="cap">Capsule (cap)</option>
+                        <option value="caps">Capsules (capsules)</option>
                         <option value="strip">Strips (strip)</option>
-                        <option value="bottle">Bottles (bottle)</option>
-                        <option value="box">Boxes (box)</option>
-                        <option value="vial">Vials (vial)</option>
-                        <option value="ample">Amples (ample)</option>
-                        <option value="phile">Philes (phile)</option>
-                        <option value="tube">Tubes (tube)</option>
-                        <option value="jar">Jars (jar)</option>
-                        <option value="piece">Pieces (piece)</option>
-                        <option value="packet">Packets (packet)</option>
-                        <option value="ml">Milliliters (ml)</option>
-                        <option value="l">Liters (l)</option>
-                        <option value="g">Grams (g)</option>
-                        <option value="kg">Kilograms (kg)</option>
+                        <option value="strips">Strips (strips)</option>
+                        <option value="bottle">Bottle (bottle)</option>
+                        <option value="bottles">Bottles (bottles)</option>
+                        <option value="box">Box (box)</option>
+                        <option value="boxes">Boxes (boxes)</option>
+                        <option value="vial">Vial (vial)</option>
+                        <option value="vials">Vials (vials)</option>
+                        <option value="ampule">Ampule (ampule)</option>
+                        <option value="ampules">Ampules (ampules)</option>
+                        <option value="phile">Phile (phile)</option>
+                        <option value="philes">Philes (philes)</option>
+                        <option value="tube">Tube (tube)</option>
+                        <option value="tubes">Tubes (tubes)</option>
+                        <option value="jar">Jar (jar)</option>
+                        <option value="jars">Jars (jars)</option>
+                        <option value="packet">Packet (packet)</option>
+                        <option value="packets">Packets (packets)</option>
                         <option value="pcs">Pieces (pcs)</option>
+                        <option value="pc">Piece (pc)</option>
                       </select>
                     </div>
                     
@@ -1263,23 +1270,30 @@ export default function EditProductPage() {
                         value={product.stockUnit}
                         onChange={handleChange}
                       >
-                        <option value="tab">Tablets (tab)</option>
-                        <option value="cap">Capsules (cap)</option>
+                        <option value="tab">Tablet (tab)</option>
+                        <option value="tablets">Tablets (tablets)</option>
+                        <option value="cap">Capsule (cap)</option>
+                        <option value="caps">Capsules (capsules)</option>
                         <option value="strip">Strips (strip)</option>
-                        <option value="bottle">Bottles (bottle)</option>
-                        <option value="box">Boxes (box)</option>
-                        <option value="vial">Vials (vial)</option>
-                        <option value="ample">Amples (ample)</option>
-                        <option value="phile">Philes (phile)</option>
-                        <option value="tube">Tubes (tube)</option>
-                        <option value="jar">Jars (jar)</option>
-                        <option value="piece">Pieces (piece)</option>
-                        <option value="packet">Packets (packet)</option>
-                        <option value="ml">Milliliters (ml)</option>
-                        <option value="l">Liters (l)</option>
-                        <option value="g">Grams (g)</option>
-                        <option value="kg">Kilograms (kg)</option>
+                        <option value="strips">Strips (strips)</option>
+                        <option value="bottle">Bottle (bottle)</option>
+                        <option value="bottles">Bottles (bottles)</option>
+                        <option value="box">Box (box)</option>
+                        <option value="boxes">Boxes (boxes)</option>
+                        <option value="vial">Vial (vial)</option>
+                        <option value="vials">Vials (vials)</option>
+                        <option value="ampule">Ampule (ampule)</option>
+                        <option value="ampules">Ampules (ampules)</option>
+                        <option value="phile">Phile (phile)</option>
+                        <option value="philes">Philes (philes)</option>
+                        <option value="tube">Tube (tube)</option>
+                        <option value="tubes">Tubes (tubes)</option>
+                        <option value="jar">Jar (jar)</option>
+                        <option value="jars">Jars (jars)</option>
+                        <option value="packet">Packet (packet)</option>
+                        <option value="packets">Packets (packets)</option>
                         <option value="pcs">Pieces (pcs)</option>
+                        <option value="pc">Piece (pc)</option>
                       </select>
                     </div>
                     
