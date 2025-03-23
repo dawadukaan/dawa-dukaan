@@ -757,6 +757,16 @@ export default function EditProductPage() {
                       >
                         <option value="tab">Tablets (tab)</option>
                         <option value="cap">Capsules (cap)</option>
+                        <option value="strip">Strips (strip)</option>
+                        <option value="bottle">Bottles (bottle)</option>
+                        <option value="box">Boxes (box)</option>
+                        <option value="vial">Vials (vial)</option>
+                        <option value="ample">Amples (ample)</option>
+                        <option value="phile">Philes (phile)</option>
+                        <option value="tube">Tubes (tube)</option>
+                        <option value="jar">Jars (jar)</option>
+                        <option value="piece">Pieces (piece)</option>
+                        <option value="packet">Packets (packet)</option>
                         <option value="ml">Milliliters (ml)</option>
                         <option value="l">Liters (l)</option>
                         <option value="g">Grams (g)</option>
@@ -1255,6 +1265,16 @@ export default function EditProductPage() {
                       >
                         <option value="tab">Tablets (tab)</option>
                         <option value="cap">Capsules (cap)</option>
+                        <option value="strip">Strips (strip)</option>
+                        <option value="bottle">Bottles (bottle)</option>
+                        <option value="box">Boxes (box)</option>
+                        <option value="vial">Vials (vial)</option>
+                        <option value="ample">Amples (ample)</option>
+                        <option value="phile">Philes (phile)</option>
+                        <option value="tube">Tubes (tube)</option>
+                        <option value="jar">Jars (jar)</option>
+                        <option value="piece">Pieces (piece)</option>
+                        <option value="packet">Packets (packet)</option>
                         <option value="ml">Milliliters (ml)</option>
                         <option value="l">Liters (l)</option>
                         <option value="g">Grams (g)</option>

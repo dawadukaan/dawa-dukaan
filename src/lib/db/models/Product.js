@@ -22,7 +22,7 @@ const ProductSchema = new mongoose.Schema({
   },
   quantityUnit: {
     type: String,
-    enum: ['g', 'kg', 'ml', 'l', 'pcs', 'tab', 'cap'],
+    enum: ['g', 'kg', 'ml', 'l', 'pcs', 'tab', 'cap', 'strip', 'bottle', 'box', 'vial', 'ample', 'phile', 'tube', 'jar', 'piece', 'packet'],
     required: [true, 'Please provide a quantity unit'],
     trim: true,
   },
@@ -73,7 +73,7 @@ const ProductSchema = new mongoose.Schema({
   },
   stockUnit: {
     type: String,
-    enum: ['g', 'kg', 'ml', 'l', 'pcs', 'tab', 'cap'],
+    enum: ['g', 'kg', 'ml', 'l', 'pcs', 'tab', 'cap', 'strip', 'bottle', 'box', 'vial', 'ample', 'phile', 'tube', 'jar', 'piece', 'packet'],
     required: [true, 'Please provide a stock unit'],
     trim: true,
   },
