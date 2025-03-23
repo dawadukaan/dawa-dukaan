@@ -1,7 +1,5 @@
-import { NextResponse } from 'next/response';
 import dbConnect from '@/lib/db/connect';
 import AdminFCMToken from '@/lib/db/models/AdminFCMToken';
-import AdminUser from '@/lib/db/models/AdminUser';
 import { authenticateAdmin } from '@/lib/api/authMiddleware';
 import { successResponse, errorResponse } from '@/lib/api/apiResponse';
 
