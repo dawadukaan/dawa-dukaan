@@ -2,6 +2,8 @@ import { authenticateUser } from "@/lib/api/authMiddleware";
 import { successResponse, errorResponse } from "@/lib/api/apiResponse";
 import AppUpdate from "@/lib/db/models/AppUpdate";
 
+// src/app/api/app-updates/latest/route.js
+
 export async function GET(request) {
   // Authenticate user
   const { authenticated, response } = await authenticateUser(request);
