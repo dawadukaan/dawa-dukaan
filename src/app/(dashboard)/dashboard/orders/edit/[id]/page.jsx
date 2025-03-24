@@ -337,6 +337,20 @@ export default function EditOrderPage({ params }) {
     }
   };
 
+  // Add this helper function for payment status notifications
+  const getPaymentStatusMessage = (status, orderId) => {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return `Payment received for order #${orderId}. Thank you!`;
+      case 'refunded':
+        return `Refund processed for order #${orderId}.`;
+      case 'failed':
+        return `Payment failed for order #${orderId}. Please update your payment method.`;
+      default:
+        return `Payment status updated for order #${orderId}: ${status}`;
+    }
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -349,10 +363,8 @@ export default function EditOrderPage({ params }) {
     setIsSaving(true);
     
     try {
-      // Ensure status has the correct capitalization (first letter uppercase, rest lowercase)
+      // Ensure status has the correct capitalization
       const formattedStatus = order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase();
-      
-      // Format payment status properly
       const formattedPaymentStatus = order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1).toLowerCase();
       
       // Prepare data for API
@@ -364,11 +376,10 @@ export default function EditOrderPage({ params }) {
         notes: order.notes,
         shippingPrice: parseFloat(order.shippingFee),
         couponDiscount: parseFloat(order.discount),
-        // Add other fields as needed
         note: `Order updated by admin on ${new Date().toLocaleString()}`
       };
       
-      // Send to API
+      // Update order
       const response = await fetch(`${env.app.apiUrl}/admin/orders/${id}`, {
         method: 'PUT',
         headers: {
@@ -382,6 +393,77 @@ export default function EditOrderPage({ params }) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to update order');
       }
+
+      // Send notification about status change
+      const notificationResponse = await fetch(`${env.app.apiUrl}/notifications/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: order.customer.id, // Send to specific customer
+          title: `Order ${order.id} ${formattedStatus}`,
+          body: getStatusNotificationMessage(formattedStatus, order.id),
+          data: {
+            type: 'order',
+            orderId: order.id,
+            status: formattedStatus,
+            orderNumber: order.id
+          },
+          type: 'order'
+        })
+      });
+
+      if (!notificationResponse.ok) {
+        console.error('Failed to send notification:', await notificationResponse.json());
+      }
+
+      // send email to customer about order status
+      const emailResponse = await fetch(`${env.app.apiUrl}/admin/orders/send-mail`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          email: order.customer.email,
+          subject: `Order ${order.id} ${formattedStatus}`,
+          orderNumber: order.id,
+          status: formattedStatus,
+          paymentStatus: formattedPaymentStatus
+        })
+      });
+
+      if (!emailResponse.ok) {
+        console.error('Failed to send email:', await emailResponse.json());
+      }
+      
+      // In handleSubmit, add payment status notification
+      // if (formattedPaymentStatus !== order.paymentStatus) {
+      //   // Send payment status notification
+      //   await fetch(`${env.app.apiUrl}/notifications/send`, {
+      //     method: 'POST',
+      //     headers: {
+      //       'Content-Type': 'application/json',
+      //       'Authorization': `Bearer ${token}`
+      //     },
+      //     body: JSON.stringify({
+      //       userId: order.customer.id,
+      //       title: `Payment ${formattedPaymentStatus}`,
+      //       body: getPaymentStatusMessage(formattedPaymentStatus, order.id),
+      //       data: {
+      //         type: 'order',
+      //         orderId: order.id,
+      //         paymentStatus: formattedPaymentStatus,
+      //         orderNumber: order.id
+      //       },
+      //       type: 'order'
+      //     })
+      //   }).catch(error => {
+      //     console.error('Failed to send payment notification:', error);
+      //   });
+      // }
       
       // Redirect to orders page after successful update
       router.push('/dashboard/orders');
@@ -391,6 +473,26 @@ export default function EditOrderPage({ params }) {
       alert(`Failed to update order: ${error.message}`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Add this helper function to get appropriate notification message
+  const getStatusNotificationMessage = (status, orderId) => {
+    switch (status.toLowerCase()) {
+      case 'processing':
+        return `Your order #${orderId} is now being processed.`;
+      case 'packed':
+        return `Great news! Your order #${orderId} has been packed and will be shipped soon.`;
+      case 'shipped':
+        return `Your order #${orderId} is on its way to you!`;
+      case 'delivered':
+        return `Your order #${orderId} has been delivered. Thank you for shopping with us!`;
+      case 'cancelled':
+        return `Your order #${orderId} has been cancelled. Please contact support for any questions.`;
+      case 'returned':
+        return `Return for order #${orderId} has been processed.`;
+      default:
+        return `Status update for your order #${orderId}: ${status}`;
     }
   };
 

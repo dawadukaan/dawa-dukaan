@@ -18,7 +18,8 @@ import {
   FiDollarSign,
   FiHelpCircle,
   FiLogOut,
-  FiFile
+  FiFileText,
+  FiDownload
 } from 'react-icons/fi';
 
 export const MENU_ITEMS = [
@@ -118,6 +119,12 @@ export const MENU_ITEMS = [
   //   icon: FiCreditCard,
   //   description: 'View payment transactions'
   // },
+  {
+    label: 'App Updates',
+    path: '/dashboard/app-updates',
+    icon: FiDownload,
+    description: 'Manage your app updates'
+  },
   {
     label: 'Settings',
     path: '/dashboard/settings',
