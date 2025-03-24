@@ -140,6 +140,44 @@ export default function ViewCustomerPage({ params }) {
     }
   };
 
+  // Add this function at the top of your component
+  const handleDownloadDocument = async (documentUrl, customerName) => {
+    try {
+      // Fetch the document
+      const response = await fetch(documentUrl);
+      if (!response.ok) throw new Error('Failed to fetch document');
+      
+      const blob = await response.blob();
+      
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      
+      // Generate filename: license-document-customername-date.extension
+      const extension = documentUrl.split('.').pop(); // Get file extension from URL
+      const date = new Date().toISOString().split('T')[0];
+      const fileName = `license-document-${customerName.toLowerCase().replace(/\s+/g, '-')}-${date}.${extension}`;
+      
+      link.download = fileName;
+      
+      // Append link to body, click it, and remove it
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(blobUrl);
+      
+      toast.success('Document download started');
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast.error('Failed to download document');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -207,7 +245,7 @@ export default function ViewCustomerPage({ params }) {
           ) : (
             <span className="flex items-center">
               <FiX className="mr-1 h-3 w-3" />
-              Unlicensed
+              Regular
             </span>
           )}
         </span>
@@ -309,12 +347,12 @@ export default function ViewCustomerPage({ params }) {
                         {customer.type === 'licensee' ? (
                           <span className="flex items-center">
                             <FiCheck className="mr-1 h-3 w-3" />
-                            Licensed
+                            Licensee
                           </span>
                         ) : (
-                          <span className="flex items-center">
+                          <span className="flex items-center">  
                             <FiX className="mr-1 h-3 w-3" />
-                            Unlicensed
+                            Regular
                           </span>
                         )}
                       </span>
@@ -444,6 +482,14 @@ export default function ViewCustomerPage({ params }) {
               <div className="bg-gray-50 rounded-lg p-6 border">
                 <h3 className="text-md font-medium text-gray-900 mb-4">License Details</h3>
                 <div className="space-y-4">
+                <div>
+                    <p className="text-sm text-gray-500">GST Number</p>
+                    <p className="mt-1 flex items-center text-gray-900">
+                      <FiFileText className="h-5 w-5 text-gray-400 mr-2" />
+                      {customer.licenseDetails?.gstNumber || 'Not provided'}
+                    </p>
+                  </div>
+
                   <div>
                     <p className="text-sm text-gray-500">License Number</p>
                     <p className="mt-1 flex items-center text-gray-900">
@@ -466,7 +512,7 @@ export default function ViewCustomerPage({ params }) {
                     <p className="text-sm text-gray-500">Customer Type</p>
                     <p className="mt-1 flex items-center">
                       <FiShield className="h-5 w-5 text-gray-400 mr-2" />
-                      Licensed Customer
+                      Licensee
                     </p>
                   </div>
                 </div>
@@ -484,6 +530,25 @@ export default function ViewCustomerPage({ params }) {
                       />
                     </div>
                     
+                    <div className="flex gap-3 mt-4">
+                      <a
+                        href={customer.licenseDetails.licenseDocument}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
+                      >
+                        <FiExternalLink className="w-4 h-4 mr-2" />
+                        View Full Size
+                      </a>
+                      
+                      <button
+                        onClick={() => handleDownloadDocument(customer.licenseDetails.licenseDocument, customer.name)}
+                        className="flex items-center px-3 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100"
+                      >
+                        <FiFileText className="w-4 h-4 mr-2" />
+                        Download
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-8 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">

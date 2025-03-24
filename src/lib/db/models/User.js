@@ -62,6 +62,10 @@ const UserSchema = new mongoose.Schema({
       type: String,
       default: '',
     },
+    gstNumber: {
+      type: String,
+      default: '',
+    },
     licenseDocument: {
       type: String,
       default: '',

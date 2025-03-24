@@ -22,7 +22,7 @@ const ProductSchema = new mongoose.Schema({
   },
   quantityUnit: {
     type: String,
-    enum: ['pcs', 'pc', 'tab', 'cap', 'strip', 'bottle', 'box', 'vial', 'ampule', 'phile', 'tube', 'jar', 'piece', 'packet', 'tabs', 'caps', 'strips', 'bottles', 'boxes', 'vials', 'ampules', 'philes', 'tubes', 'jars', 'pieces', 'packets'],
+    enum: ['pcs', 'pc', 'tab', 'cap', 'strip', 'bottle', 'box', 'vial', 'ampule', 'phile', 'tube', 'jar', 'piece', 'packet', 'tabs', 'caps', 'strips', 'bottles', 'boxes', 'vials', 'ampules', 'philes', 'tubes', 'jars', 'pieces', 'packets', 'drop', 'drops'],
     required: [true, 'Please provide a quantity unit'],
     trim: true,
   },
@@ -73,7 +73,7 @@ const ProductSchema = new mongoose.Schema({
   },
   stockUnit: {
     type: String,
-    enum: ['pcs', 'pc', 'tab', 'cap', 'strip', 'bottle', 'box', 'vial', 'ampule', 'phile', 'tube', 'jar', 'piece', 'packet', 'tabs', 'caps', 'strips', 'bottles', 'boxes', 'vials', 'ampules', 'philes', 'tubes', 'jars', 'pieces', 'packets'],
+    enum: ['pcs', 'pc', 'tab', 'cap', 'strip', 'bottle', 'box', 'vial', 'ampule', 'phile', 'tube', 'jar', 'piece', 'packet', 'tabs', 'caps', 'strips', 'bottles', 'boxes', 'vials', 'ampules', 'philes', 'tubes', 'jars', 'pieces', 'packets', 'drop', 'drops'],
     required: [true, 'Please provide a stock unit'],
     trim: true,
   },

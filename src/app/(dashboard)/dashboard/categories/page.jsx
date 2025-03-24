@@ -119,6 +119,14 @@ export default function CategoriesPage() {
   };
 
   const toggleCategorySelection = (id) => {
+    // Find the category
+    const category = categories.find(c => c.id === id);
+    
+    // Don't allow selection of Uncategorized category
+    if (category && category.name === 'Uncategorized') {
+      return;
+    }
+    
     setSelectedCategories(prev => 
       prev.includes(id) 
         ? prev.filter(categoryId => categoryId !== id)
@@ -127,10 +135,13 @@ export default function CategoriesPage() {
   };
 
   const toggleAllCategories = () => {
-    if (selectedCategories.length === filteredCategories.length) {
+    // Filter out the Uncategorized category
+    const selectableCategories = filteredCategories.filter(c => c.name !== 'Uncategorized');
+    
+    if (selectedCategories.length === selectableCategories.length) {
       setSelectedCategories([]);
     } else {
-      setSelectedCategories(filteredCategories.map(c => c.id));
+      setSelectedCategories(selectableCategories.map(c => c.id));
     }
   };
 
@@ -360,6 +371,7 @@ export default function CategoriesPage() {
                       className="rounded text-green-600 focus:ring-green-500 h-4 w-4"
                       checked={selectedCategories.includes(category.id)}
                       onChange={() => toggleCategorySelection(category.id)}
+                      disabled={category.name === 'Uncategorized'}
                     />
                   </div>
                   {category.featured && (
@@ -385,18 +397,22 @@ export default function CategoriesPage() {
                   <div className="flex justify-between items-center mt-4">
                     <span className="text-sm text-gray-500">Order: {category.order || 0}</span>
                     <div className="flex gap-2">
-                      <Link 
-                        href={`/dashboard/categories/edit/${category.id}`}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <FiEdit2 className="w-5 h-5" />
-                      </Link>
-                      <button 
-                        onClick={() => handleDeleteCategory(category.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <FiTrash2 className="w-5 h-5" />
-                      </button>
+                      {category.name !== 'Uncategorized' && (
+                        <>
+                          <Link 
+                            href={`/dashboard/categories/edit/${category.id}`}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <FiEdit2 className="w-5 h-5" />
+                          </Link>
+                          <button 
+                            onClick={() => handleDeleteCategory(category.id)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <FiTrash2 className="w-5 h-5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -422,7 +438,7 @@ export default function CategoriesPage() {
                   <input 
                     type="checkbox" 
                     className="rounded text-green-600 focus:ring-green-500 h-4 w-4"
-                    checked={selectedCategories.length === filteredCategories.length && filteredCategories.length > 0}
+                    checked={selectedCategories.length === filteredCategories.filter(c => c.name !== 'Uncategorized').length && filteredCategories.length > 0}
                     onChange={toggleAllCategories}
                   />
                 </th>
@@ -456,6 +472,7 @@ export default function CategoriesPage() {
                         className="rounded text-green-600 focus:ring-green-500 h-4 w-4"
                         checked={selectedCategories.includes(category.id)}
                         onChange={() => toggleCategorySelection(category.id)}
+                        disabled={category.name === 'Uncategorized'}
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -512,18 +529,22 @@ export default function CategoriesPage() {
                         <Link href={`/categories/${category.slug}`} className="text-gray-600 hover:text-gray-900">
                           <FiEye className="w-5 h-5" />
                         </Link>
-                        <Link 
-                          href={`/dashboard/categories/edit/${category.id}`}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          <FiEdit2 className="w-5 h-5" />
-                        </Link>
-                        <button 
-                          onClick={() => handleDeleteCategory(category.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <FiTrash2 className="w-5 h-5" />
-                        </button>
+                        {category.name !== 'Uncategorized' && (
+                          <>
+                            <Link 
+                              href={`/dashboard/categories/edit/${category.id}`}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              <FiEdit2 className="w-5 h-5" />
+                            </Link>
+                            <button 
+                              onClick={() => handleDeleteCategory(category.id)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              <FiTrash2 className="w-5 h-5" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -346,35 +346,28 @@ export default function AddProductPage() {
     }
   };
 
-  const generateSKU = () => {
-    if (!product.name || !product.primaryCategory) {
-      toast.error('Product name and primary category are required to generate SKU');
-      return;
+  const generateSKU = (productName, primaryCategory) => {
+    if (!productName) {
+      toast.error('Product name is required to generate SKU');
+      return '';
     }
-    
-    // Get the primary category name
-    const category = categories.find(cat => cat.id === product.primaryCategory);
-    if (!category) {
-      toast.error('Selected primary category not found');
-      return;
-    }
-    
-    // Generate SKU format: CAT-PRODUCTNAME-RANDOM
-    const categoryPrefix = category.name.substring(0, 3).toUpperCase();
-    const productNamePart = product.name
+
+    // Get category prefix - use 'UNC' if no category selected
+    const categoryPrefix = primaryCategory?.name 
+      ? primaryCategory.name.substring(0, 3).toUpperCase()
+      : 'UNC';
+
+    // Clean up product name (remove special characters, spaces)
+    const cleanProductName = productName
       .replace(/[^a-zA-Z0-9]/g, '')
       .substring(0, 5)
       .toUpperCase();
-    const randomPart = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
-    
-    const sku = `${categoryPrefix}-${productNamePart}-${randomPart}`;
-    
-    setProduct({
-      ...product,
-      sku
-    });
-    
-    toast.success('SKU generated successfully');
+
+    // Generate random number
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+
+    // Combine all parts
+    return `${categoryPrefix}-${cleanProductName}-${randomNum}`;
   };
 
   const handleImageUpload = async (e) => {
@@ -713,6 +706,8 @@ export default function AddProductPage() {
                         <option value="packets">Packets (packets)</option>
                         <option value="pcs">Pieces (pcs)</option>
                         <option value="pc">Piece (pc)</option>
+                        <option value="drop">Drop (drop)</option>
+                        <option value="drops">Drops (drops)</option>
                   </select>
                 </div>
                 
@@ -733,7 +728,14 @@ export default function AddProductPage() {
                     />
                     <button
                       type="button"
-                      onClick={generateSKU}
+                      onClick={() => {
+                        const sku = generateSKU(product.name, product.primaryCategory || null);
+                        setProduct(prev => ({
+                          ...prev,
+                          sku
+                        }));
+                        toast.success('SKU generated successfully');
+                      }}
                       className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
                     >
                       Generate
@@ -1291,6 +1293,8 @@ export default function AddProductPage() {
                         <option value="packets">Packets (packets)</option>
                         <option value="pcs">Pieces (pcs)</option>
                         <option value="pc">Piece (pc)</option>
+                        <option value="drop">Drop (drop)</option>
+                        <option value="drops">Drops (drops)</option>
                   </select>
                 </div>
                 

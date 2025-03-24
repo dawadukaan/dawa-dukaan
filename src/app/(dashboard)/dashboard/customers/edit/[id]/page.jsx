@@ -42,6 +42,7 @@ export default function EditCustomerPage({ params }) {
     },
     licenseDetails: {
       licenseNumber: '',
+      gstNumber: '',
       licenseDocument: ''
     }
   });
@@ -93,6 +94,7 @@ export default function EditCustomerPage({ params }) {
           },
           licenseDetails: userData.licenseDetails || {
             licenseNumber: '',
+            gstNumber: '',
             licenseDocument: ''
           }
         });
@@ -373,7 +375,11 @@ export default function EditCustomerPage({ params }) {
       
       // Add license details if customer is a licensee
       if (customer.type === 'licensee') {
-        userData.licenseDetails = customer.licenseDetails;
+        userData.licenseDetails = {
+          licenseNumber: customer.licenseDetails.licenseNumber || '',
+          gstNumber: customer.licenseDetails.gstNumber || '',
+          licenseDocument: customer.licenseDetails.licenseDocument || ''
+        };
       }
       
       // Update user
@@ -635,8 +641,8 @@ export default function EditCustomerPage({ params }) {
                   value={customer.type}
                   onChange={handleChange}
                 >
-                  <option value="unlicensed">Unlicensed</option>
-                  <option value="licensee">Licensed</option>
+                  <option value="unlicensed">Regular</option>
+                  <option value="licensee">Licensee</option>
                 </select>
                 <p className="mt-1 text-xs text-gray-500">
                   Licensed customers can purchase prescription medicines
@@ -849,6 +855,29 @@ export default function EditCustomerPage({ params }) {
                       required={customer.type === 'licensee'}
                     />
                   </div>
+                </div>
+                
+                <div>
+                  <label htmlFor="gstNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                    GST Number
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FiFileText className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      id="gstNumber"
+                      name="licenseDetails.gstNumber"
+                      placeholder="e.g. 29ABCDE1234F1Z5"
+                      className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      value={customer.licenseDetails?.gstNumber || ''}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Enter the 15-digit GST number (if applicable)
+                  </p>
                 </div>
                 
                 <div>

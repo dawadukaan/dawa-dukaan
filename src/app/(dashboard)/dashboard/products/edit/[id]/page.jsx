@@ -779,6 +779,8 @@ export default function EditProductPage() {
                         <option value="packets">Packets (packets)</option>
                         <option value="pcs">Pieces (pcs)</option>
                         <option value="pc">Piece (pc)</option>
+                        <option value="drop">Drop (drop)</option>
+                        <option value="drops">Drops (drops)</option>
                       </select>
                     </div>
                     
@@ -1294,6 +1296,8 @@ export default function EditProductPage() {
                         <option value="packets">Packets (packets)</option>
                         <option value="pcs">Pieces (pcs)</option>
                         <option value="pc">Piece (pc)</option>
+                        <option value="drop">Drop (drop)</option>
+                        <option value="drops">Drops (drops)</option>
                       </select>
                     </div>
                     

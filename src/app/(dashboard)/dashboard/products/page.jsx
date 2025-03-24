@@ -60,9 +60,10 @@ export default function ProductsPage() {
           setProducts(data.data.products);
           setPagination(data.data.pagination);
           
-          // Extract unique categories
+          // Extract unique categories and always include Uncategorized
           const uniqueCategories = new Set();
           uniqueCategories.add('All');
+          uniqueCategories.add('Uncategorized');
           
           data.data.products.forEach(product => {
             if (product.categories && Array.isArray(product.categories)) {
@@ -99,8 +100,10 @@ export default function ProductsPage() {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesCategory = selectedCategory === 'All' || 
-        (product.categories && product.categories.some(cat => cat.name === selectedCategory)) ||
-        (product.primaryCategory && product.primaryCategory.name === selectedCategory);
+        (selectedCategory === 'Uncategorized' ? 
+          (!product.categories || product.categories.length === 0) && (!product.primaryCategory) :
+          (product.categories && product.categories.some(cat => cat.name === selectedCategory)) ||
+          (product.primaryCategory && product.primaryCategory.name === selectedCategory));
       
       const matchesStock = stockFilter === 'all' || 
                           (stockFilter === 'inStock' && product.stock > 0) ||
@@ -371,14 +374,14 @@ export default function ProductsPage() {
                         {product.primaryCategory ? (
                           <StatusBadge status={product.primaryCategory.name} />
                         ) : (
-                          <span className="text-gray-400 text-sm">No category</span>
+                          <StatusBadge status="Uncategorized" />
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="space-y-1">
                           {/* Unlicensed Price */}
                           <div>
-                            <span className="text-xs font-medium text-gray-500">Unlicensed:</span>
+                            <span className="text-xs font-medium text-gray-500">Regular:</span>
                             <div className="text-sm text-gray-900">
                               {product.salePrice && product.salePrice.unlicensedPrice ? (
                                 <>₹{parseFloat(product.salePrice.unlicensedPrice).toFixed(2)}</>

@@ -748,12 +748,12 @@ export default function CustomersPage() {
                         {customer.type === 'licensee' ? (
                           <span className="flex items-center">
                             <FiCheckCircle className="mr-1 h-3 w-3" />
-                            Licensed
+                            Licensee
                           </span>
                         ) : (
                           <span className="flex items-center">
                             <FiXCircle className="mr-1 h-3 w-3" />
-                            Unlicensed
+                            Regular
                           </span>
                         )}
                       </span>

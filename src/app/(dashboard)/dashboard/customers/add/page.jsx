@@ -41,6 +41,7 @@ export default function AddCustomerPage() {
     },
     licenseDetails: {
       licenseNumber: '',
+      gstNumber: '',
       licenseDocument: ''
     }
   });
@@ -199,12 +200,10 @@ export default function AddCustomerPage() {
     try {
       setIsUploadingAvatar(true);
       
-      // Create form data for upload
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'user-avatars');
       
-      // Upload to Cloudinary via your API
       const response = await fetch(`${env.app.apiUrl}/upload`, {
         method: 'POST',
         body: formData,
@@ -217,17 +216,20 @@ export default function AddCustomerPage() {
       
       const data = await response.json();
       
-      // Update customer state with the Cloudinary URL
-      setCustomer({
-        ...customer,
-        avatar: data.url
-      });
-      
-      toast.success('Profile image uploaded successfully');
+      // Fix: Access the correct URL path from the response
+      if (data.success && data.data && data.data.url) {
+        setCustomer(prevCustomer => ({
+          ...prevCustomer,
+          avatar: data.data.url // Use data.data.url instead of data.url
+        }));
+        toast.success('Profile image uploaded successfully');
+        console.log('Updated avatar URL:', data.data.url); // Debug log
+      } else {
+        throw new Error('Invalid upload response');
+      }
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast.error(error.message || 'Failed to upload profile image');
-      // Keep the preview but show an error
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -241,12 +243,10 @@ export default function AddCustomerPage() {
     try {
       setIsUploadingLicense(true);
       
-      // Create form data for upload
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'license-documents');
       
-      // Upload to Cloudinary via your API
       const response = await fetch(`${env.app.apiUrl}/upload`, {
         method: 'POST',
         body: formData,
@@ -258,21 +258,24 @@ export default function AddCustomerPage() {
       }
       
       const data = await response.json();
-      console.log('License document upload response:', data);
+      console.log('Upload response:', data); // Debug log
       
-      // Update customer state with the Cloudinary URL
-      setCustomer(prevCustomer => ({
-        ...prevCustomer,
-        licenseDetails: {
-          ...prevCustomer.licenseDetails,
-          licenseDocument: data.url
-        }
-      }));
-      
-      // Log the updated customer state to verify
-      console.log('Updated customer state after license upload:', customer.licenseDetails);
-      
-      toast.success('License document uploaded successfully');
+      // Fix: Access the correct URL path from the response
+      if (data.success && data.data && data.data.url) {
+        setCustomer(prevCustomer => ({
+          ...prevCustomer,
+          licenseDetails: {
+            ...prevCustomer.licenseDetails,
+            licenseDocument: data.data.url // Use data.data.url instead of data.url
+          }
+        }));
+        
+        // Debug log to verify state update
+        console.log('Updated license document URL:', data.data.url);
+        toast.success('License document uploaded successfully');
+      } else {
+        throw new Error('Invalid upload response');
+      }
     } catch (error) {
       console.error('Error uploading license document:', error);
       toast.error(error.message || 'Failed to upload license document');
@@ -286,7 +289,6 @@ export default function AddCustomerPage() {
     e.preventDefault();
     setFormError('');
     
-    // Validate final step
     if (!validateStep(currentStep)) {
       return;
     }
@@ -301,24 +303,28 @@ export default function AddCustomerPage() {
         name: customer.name,
         email: customer.email,
         phone: customer.phone,
-        password: customer.password || 'Password@123', // Use default if empty
+        password: customer.password || 'Password@123',
         isActive: customer.isActive,
         role: 'customer',
         type: customer.type || 'unlicensed',
-        avatar: customer.avatar || '', // Include avatar if provided
+        avatar: customer.avatar || '', // Make sure avatar is included
       };
       
       // Add license details if customer is a licensee
       if (customer.type === 'licensee') {
-        // Make sure to include the licenseDetails object with all properties
         userData.licenseDetails = {
           licenseNumber: customer.licenseDetails.licenseNumber || '',
+          gstNumber: customer.licenseDetails.gstNumber || '',
           licenseDocument: customer.licenseDetails.licenseDocument || ''
         };
-        
-        // Log the license details to verify they're being included
-        console.log('License details being sent:', userData.licenseDetails);
       }
+      
+      // Debug log to verify data before submission
+      console.log('Submitting customer data:', {
+        ...userData,
+        avatar: userData.avatar ? 'Present' : 'Not present',
+        licenseDocument: userData.licenseDetails?.licenseDocument ? 'Present' : 'Not present'
+      });
       
       // Send data to API
       const response = await fetch(`${env.app.apiUrl}/admin/users`, {
@@ -484,7 +490,7 @@ export default function AddCustomerPage() {
                   value={customer.type}
                   onChange={handleChange}
                 >
-                  <option value="unlicensed">Unlicensed</option>
+                  <option value="unlicensed">Regular</option>
                   <option value="licensee">Licensee</option>
                 </select>
                 <p className="mt-1 text-xs text-gray-500">
@@ -656,7 +662,7 @@ export default function AddCustomerPage() {
                 <div className="flex">
                   <FiInfo className="h-5 w-5 text-yellow-500 mr-3 mt-0.5" />
                   <div>
-                    <h3 className="text-sm font-medium text-yellow-800">Unlicensed Customer</h3>
+                    <h3 className="text-sm font-medium text-yellow-800">Regular</h3>
                     <p className="text-sm text-yellow-700 mt-1">
                       This customer is marked as unlicensed and will not be able to purchase prescription medicines.
                       To enable prescription purchases, go back to step 1 and change the license type to "Licensee".
@@ -687,6 +693,29 @@ export default function AddCustomerPage() {
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
                     Enter the license number exactly as it appears on the document
+                  </p>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label htmlFor="gstNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                    GST Number
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FiFileText className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      id="gstNumber"
+                      name="licenseDetails.gstNumber"
+                      placeholder="e.g. 29ABCDE1234F1Z5"
+                      className="pl-10 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      value={customer.licenseDetails.gstNumber || ''}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Enter the 15-digit GST number (if applicable)
                   </p>
                 </div>
                 
