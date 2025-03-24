@@ -10,7 +10,8 @@ cloudinary.config({
   api_secret: env.cloudinary.apiSecret
 });
 
-export const maxDuration = 300; // Set max duration to 5 minutes
+// Change maxDuration to 60 seconds (Vercel Hobby plan limit)
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
@@ -29,16 +30,16 @@ export async function POST(request) {
       );
     }
     
-    // Check file size (limit to 100MB)
-    const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+    // Reduce max file size to 50MB for faster uploads
+    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'File size must be less than 100MB' },
+        { error: 'File size must be less than 50MB' },
         { status: 400 }
       );
     }
 
-    // Check if file is APK by extension
+    // Check if file is APK
     if (!file.name.toLowerCase().endsWith('.apk')) {
       return NextResponse.json(
         { error: 'Only APK files are allowed' },
@@ -51,7 +52,7 @@ export async function POST(request) {
     const buffer = Buffer.from(bytes);
     const base64String = `data:application/octet-stream;base64,${buffer.toString('base64')}`;
     
-    // Set up upload options with increased timeout
+    // Optimize upload options for faster processing
     const uploadOptions = {
       folder: 'app-updates',
       resource_type: 'raw',
@@ -60,23 +61,27 @@ export async function POST(request) {
         uploaded_from: 'dashboard',
         file_type: 'apk'
       },
-      timeout: 120000, // 2 minute timeout
-      chunk_size: 6000000, // 6MB chunks
+      timeout: 55000, // 55 second timeout (leaving buffer for other operations)
+      chunk_size: 5000000, // 5MB chunks for faster uploads
       format: 'apk'
     };
     
-    // Upload to Cloudinary with chunking for large files
+    // Upload to Cloudinary with optimized chunking
     const result = await new Promise((resolve, reject) => {
+      let uploadTimeout = setTimeout(() => {
+        reject(new Error('Upload timeout - please try again with a smaller file'));
+      }, 55000); // Set timeout to 55 seconds
+
       const uploadStream = cloudinary.uploader.upload_chunked(
         base64String,
         uploadOptions,
         (error, result) => {
+          clearTimeout(uploadTimeout);
           if (error) reject(error);
           else resolve(result);
         }
       );
 
-      // Add progress monitoring if needed
       uploadStream.on('progress', progress => {
         console.log(`Upload progress: ${progress}%`);
       });
@@ -98,8 +103,8 @@ export async function POST(request) {
     let errorMessage = 'Failed to upload APK file';
     let statusCode = 500;
 
-    if (error.message === 'Request Timeout' || error.http_code === 499) {
-      errorMessage = 'Upload timeout - please try again with a smaller file or better connection';
+    if (error.message.includes('timeout')) {
+      errorMessage = 'Upload timeout - please try with a smaller file or use direct URL upload';
       statusCode = 408;
     }
     

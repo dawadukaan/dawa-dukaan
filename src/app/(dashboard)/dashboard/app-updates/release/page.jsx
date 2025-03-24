@@ -29,6 +29,9 @@ export default function ReleaseAppUpdatePage() {
   // Add to the state
   const [sendNotification, setSendNotification] = useState(true);
 
+  // Add a toggle between file upload and direct URL
+  const [uploadMethod, setUploadMethod] = useState('url'); // 'url' or 'file'
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setUpdate(prev => ({
@@ -146,7 +149,6 @@ export default function ReleaseAppUpdatePage() {
       setIsUploading(true);
       setUploadProgress(0);
       
-      // Create loading toast
       const loadingToast = toast.loading('Uploading APK file...');
       
       // Simulate progress for better UX
@@ -184,10 +186,10 @@ export default function ReleaseAppUpdatePage() {
       setUploadProgress(100);
       const data = await response.json();
 
-      if (data.success && data.data.url) {
+      if (data.success && data.data?.url) {
         setUpdate(prev => ({
           ...prev,
-          apkUrl: data.data.url
+          apkUrl: data.data.url || ''
         }));
         toast.success('APK uploaded successfully');
       } else {
@@ -213,6 +215,20 @@ export default function ReleaseAppUpdatePage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    }
+  };
+
+  // Add this function
+  const handleUploadMethodChange = (method) => {
+    setUploadMethod(method);
+    // Reset the APK URL when switching methods
+    setUpdate(prev => ({
+      ...prev,
+      apkUrl: ''
+    }));
+    // Reset file input if switching from file upload
+    if (method === 'url' && fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -305,14 +321,57 @@ export default function ReleaseAppUpdatePage() {
             </div>
           </div>
 
-          {/* Hidden file input for APK */}
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept=".apk"
-            onChange={handleApkUpload}
-          />
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">Upload Method</label>
+            <div className="mt-2">
+              <select
+                value={uploadMethod}
+                onChange={(e) => handleUploadMethodChange(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+              >
+                <option value="url">Direct URL</option>
+                <option value="file">File Upload</option>
+              </select>
+            </div>
+          </div>
+
+          {uploadMethod === 'url' ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">APK URL</label>
+              <input
+                type="url"
+                value={update.apkUrl || ''}
+                onChange={(e) => setUpdate(prev => ({ 
+                  ...prev, 
+                  apkUrl: e.target.value 
+                }))}
+                placeholder="https://example.com/your-app.apk"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+              />
+              <p className="mt-2 text-sm text-gray-500">
+                Enter a direct download URL for your APK file
+              </p>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Upload APK</label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".apk"
+                onChange={handleApkUpload}
+                className="mt-1 block w-full"
+              />
+              {update.apkUrl && (
+                <p className="mt-2 text-sm text-green-600">
+                  File uploaded: {update.apkUrl.split('/').pop()}
+                </p>
+              )}
+              <p className="mt-2 text-sm text-gray-500">
+                Maximum file size: 50MB. For larger files, please use direct URL upload.
+              </p>
+            </div>
+          )}
 
           {/* Upload progress indicator */}
           {isUploading && (
@@ -326,35 +385,6 @@ export default function ReleaseAppUpdatePage() {
               <p className="text-sm text-blue-700 font-medium">{uploadProgress}% Uploading APK...</p>
             </div>
           )}
-
-          <div>
-            <label htmlFor="apkUrl" className="block text-sm font-medium text-gray-700 mb-1">
-              APK URL <span className="text-red-500">*</span>
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="apkUrl"
-                name="apkUrl"
-                type="url"
-                required
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                value={update.apkUrl}
-                onChange={handleChange}
-                placeholder="https://example.com/app-v1.0.0.apk"
-              />
-              <button
-                type="button"
-                className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg flex items-center hover:bg-blue-100"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <FiUpload className="w-5 h-5 mr-2" />
-                Upload APK
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Upload APK file or provide a direct download URL
-            </p>
-          </div>
 
           <div>
             <label htmlFor="releaseNotes" className="block text-sm font-medium text-gray-700 mb-1">
