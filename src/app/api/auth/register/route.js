@@ -51,6 +51,7 @@ export async function POST(request) {
       type: data.type,
       licenseDetails: {
         licenseNumber: data.licenseNumber,
+        gstNumber: data.gstNumber,
         licenseDocument: data.licenseDocument,
       },
       // referralCode will be auto-generated in pre-save hook
@@ -123,6 +124,7 @@ export async function POST(request) {
         referralCode: user.referralCode,
         licenseDetails: {
           licenseNumber: user.licenseDetails.licenseNumber,
+          gstNumber: user.licenseDetails.gstNumber,
           licenseDocument: user.licenseDetails.licenseDocument,
         },
       },
