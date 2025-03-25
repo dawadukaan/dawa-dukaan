@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/db/connect";
 import Order from "@/lib/db/models/Order";
+import Address from "@/lib/db/models/Address";
 import { successResponse, errorResponse } from "@/lib/api/apiResponse";
 import { authenticateAdmin } from "@/lib/api/authMiddleware";
 

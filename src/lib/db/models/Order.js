@@ -1,5 +1,6 @@
 // src/lib/db/models/Order.js
 import mongoose from 'mongoose';
+import Address from './Address';
 
 const OrderItemSchema = new mongoose.Schema({
   product: {

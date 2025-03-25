@@ -1308,7 +1308,7 @@ export default function EditOrderPage({ params }) {
                 </div>
               </div>
               
-              <div className="mt-6 border rounded-lg p-4">
+              {/* <div className="mt-6 border rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-3">Add Status Update</h3>
                 <div className="space-y-4">
                   <div>
@@ -1336,7 +1336,7 @@ export default function EditOrderPage({ params }) {
                     </button>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           )}
           
