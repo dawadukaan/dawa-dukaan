@@ -88,10 +88,11 @@ export async function POST(request) {
     }
     
     // Calculate order totals
-    const shippingPrice = parseFloat(data.shippingFee) || 40; // Default shipping fee
+    const shippingPrice = parseFloat(data.shippingFee) || 0; // Default shipping fee
     const taxPrice = parseFloat(data.taxPrice) || 0;
     const discount = parseFloat(data.discount) || 0;
     const totalPrice = itemsPrice + shippingPrice + taxPrice - discount;
+    const totalPriceRounded = Math.round(totalPrice);
     
     // Set payment method (validate against schema enum)
     let paymentMethod = 'COD'; // Default to COD
@@ -118,7 +119,7 @@ export async function POST(request) {
       itemsPrice: itemsPrice,
       taxPrice: taxPrice,
       shippingPrice: shippingPrice,
-      totalPrice: totalPrice,
+      totalPrice: totalPriceRounded,
       isPaid: false,
       status: 'Processing', // Default status for new orders
       notes: data.notes || '',
