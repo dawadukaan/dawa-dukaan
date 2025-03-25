@@ -237,30 +237,30 @@ export default function ViewOrderPage({ params }) {
           </p>
         </div>
         <div className="flex gap-2">
-          <button
+          {/* <button
             type="button"
             onClick={handlePrintInvoice}
             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
           >
             <FiPrinter className="w-5 h-5 mr-2" />
             Print
-          </button>
-          <button
+          </button> */}
+          {/* <button
             type="button"
             onClick={handleSendInvoiceEmail}
             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
           >
             <FiMail className="w-5 h-5 mr-2" />
             Email
-          </button>
-          <button
+          </button> */}
+          {/* <button
             type="button"
             onClick={handleDownloadInvoice}
             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
           >
             <FiDownload className="w-5 h-5 mr-2" />
             Download
-          </button>
+          </button> */}
           <Link 
             href={`/dashboard/orders/edit/${order._id}`}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
@@ -413,25 +413,25 @@ export default function ViewOrderPage({ params }) {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-medium">₹{summary.subtotal.toFixed(2)}</span>
+                    <span className="font-medium">₹{Math.round(summary.subtotal).toFixed(2)}</span>
                   </div>
                   
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping Fee:</span>
-                    <span className="font-medium">₹{summary.shippingFee.toFixed(2)}</span>
+                    <span className="font-medium">₹{Math.round(summary.shippingFee).toFixed(2)}</span>
                   </div>
                   
                   {summary.discount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Discount:</span>
-                      <span className="font-medium text-red-600">-₹{summary.discount.toFixed(2)}</span>
+                      <span className="font-medium text-red-600">-₹{Math.round(summary.discount).toFixed(2)}</span>
                     </div>
                   )}
                   
                   <div className="border-t pt-3 mt-3">
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-700">Total:</span>
-                      <span className="font-bold text-lg">₹{summary.total.toFixed(2)}</span>
+                      <span className="font-bold text-lg">₹{Math.round(summary.total).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -548,7 +548,7 @@ export default function ViewOrderPage({ params }) {
                           {item.quantity}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ₹{(item.price * item.quantity).toFixed(2)}
+                          ₹{Math.round(item.price * item.quantity).toFixed(2)}
                         </td>
                       </tr>
                     ))}
@@ -559,7 +559,7 @@ export default function ViewOrderPage({ params }) {
                         Subtotal:
                       </td>
                       <td className="px-6 py-3 text-sm font-medium text-gray-900">
-                        ₹{summary.subtotal.toFixed(2)}
+                        ₹{Math.round(summary.subtotal).toFixed(2)}
                       </td>
                     </tr>
                     <tr>
@@ -567,7 +567,7 @@ export default function ViewOrderPage({ params }) {
                         Shipping Fee:
                       </td>
                       <td className="px-6 py-3 text-sm font-medium text-gray-900">
-                        ₹{summary.shippingFee.toFixed(2)}
+                        ₹{Math.round(summary.shippingFee).toFixed(2)}
                       </td>
                     </tr>
                     {summary.discount > 0 && (
@@ -576,7 +576,7 @@ export default function ViewOrderPage({ params }) {
                           Discount:
                         </td>
                         <td className="px-6 py-3 text-sm font-medium text-red-600">
-                          -₹{summary.discount.toFixed(2)}
+                          -₹{Math.round(summary.discount).toFixed(2)}
                         </td>
                       </tr>
                     )}
@@ -585,7 +585,7 @@ export default function ViewOrderPage({ params }) {
                         Total:
                       </td>
                       <td className="px-6 py-3 text-sm font-bold text-gray-900">
-                        ₹{summary.total.toFixed(2)}
+                        ₹{Math.round(summary.total).toFixed(2)}
                       </td>
                     </tr>
                   </tfoot>
@@ -689,25 +689,25 @@ export default function ViewOrderPage({ params }) {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal:</span>
-                      <span>₹{summary.subtotal.toFixed(2)}</span>
+                      <span>₹{Math.round(summary.subtotal).toFixed(2)}</span>
                     </div>
                     
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Shipping Fee:</span>
-                      <span>₹{summary.shippingFee.toFixed(2)}</span>
+                      <span>₹{Math.round(summary.shippingFee).toFixed(2)}</span>
                     </div>
                     
                     {summary.discount > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Discount:</span>
-                        <span className="text-red-600">-₹{summary.discount.toFixed(2)}</span>
+                        <span className="text-red-600">-₹{Math.round(summary.discount).toFixed(2)}</span>
                       </div>
                     )}
                     
                     <div className="border-t pt-2 mt-2">
                       <div className="flex justify-between">
                         <span className="font-medium">Total:</span>
-                        <span className="font-bold">₹{summary.total.toFixed(2)}</span>
+                        <span className="font-bold">₹{Math.round(summary.total).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

@@ -156,7 +156,7 @@ export async function POST(request) {
       paymentDetails = {
         paymentUrl: `https://example.com/pay/${savedOrder._id}`,
         orderId: savedOrder._id,
-        amount: totalPrice
+        amount: totalPriceRounded
       };
     }
     
