@@ -19,7 +19,8 @@ import {
   FiHelpCircle,
   FiLogOut,
   FiFileText,
-  FiDownload
+  FiDownload,
+  FiImage
 } from 'react-icons/fi';
 
 export const MENU_ITEMS = [
@@ -34,6 +35,12 @@ export const MENU_ITEMS = [
     path: '/dashboard/notifications',
     icon: FiBell,
     description: 'Manage your notifications'
+  },
+  {
+    label: 'Slider Images',
+    path: '/dashboard/slider-images',
+    icon: FiImage,
+    description: 'Manage your slider images'
   },
   {
     label: 'Products',
