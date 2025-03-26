@@ -369,28 +369,40 @@ export default function EditProductPage() {
     setIsSaving(true);
     
     try {
+      // Prepare the product data
+      const productData = {
+        ...product,
+        // Ensure onSale is explicitly included
+        onSale: Boolean(product.onSale),
+        // Clear sale prices if not on sale
+        salePrice: product.onSale ? product.salePrice : {
+          licensedPrice: '',
+          unlicensedPrice: ''
+        }
+      };
+
       // Convert Map to object for API submission
       const additionalInfoObj = {};
-      product.additionalInfo.forEach((value, key) => {
+      productData.additionalInfo.forEach((value, key) => {
         if (key.trim()) { // Only include entries with non-empty keys
           additionalInfoObj[key] = value;
         }
       });
       
       // Prepare the product data with default inventory values if not provided
-      const productData = {
-        ...product,
+      const productDataWithDefaults = {
+        ...productData,
         additionalInfo: additionalInfoObj,
-        slug: product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        slug: productData.slug || productData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         // Set default inventory values if not provided
-        stock: product.stock || '0',
-        stockUnit: product.stockUnit || 'tab',
-        stockStatus: product.stockStatus || 'in stock'
+        stock: productData.stock || '0',
+        stockUnit: productData.stockUnit || 'tab',
+        stockStatus: productData.stockStatus || 'in stock'
       };
       
       // Format expiry date if provided
-      if (productData.medicineDetails.expiryDate) {
-        productData.medicineDetails.expiryDate = new Date(productData.medicineDetails.expiryDate).toISOString();
+      if (productDataWithDefaults.medicineDetails.expiryDate) {
+        productDataWithDefaults.medicineDetails.expiryDate = new Date(productDataWithDefaults.medicineDetails.expiryDate).toISOString();
       }
       
       // Send to API
@@ -401,7 +413,7 @@ export default function EditProductPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(productData),
+        body: JSON.stringify(productDataWithDefaults),
       });
       
       if (!response.ok) {
@@ -512,11 +524,11 @@ export default function EditProductPage() {
       
       const data = await response.json();
       
-      if (data.success && data.url) {
-        console.log('Upload successful, image URL:', data.url);
+      if (data.success && data.data.url) {
+        console.log('Upload successful, image URL:', data.data.url);
         
         // Add the image URL to the product images array
-        const updatedImages = [...product.images, data.url];
+        const updatedImages = [...product.images, data.data.url];
         setProduct({
           ...product,
           images: updatedImages
@@ -564,6 +576,20 @@ export default function EditProductPage() {
     const salePrice = parseFloat(sale);
     if (regularPrice <= 0 || salePrice <= 0 || salePrice >= regularPrice) return 0;
     return Math.round(((regularPrice - salePrice) / regularPrice) * 100);
+  };
+
+  // Add this function to handle onSale toggle
+  const handleOnSaleChange = (e) => {
+    const isOnSale = e.target.checked;
+    setProduct(prev => ({
+      ...prev,
+      onSale: isOnSale,
+      // Clear sale prices if turning off sale
+      salePrice: isOnSale ? prev.salePrice : {
+        licensedPrice: '',
+        unlicensedPrice: ''
+      }
+    }));
   };
 
   return (
@@ -1001,10 +1027,11 @@ export default function EditProductPage() {
                             type="number"
                             min="0"
                             step="0.01"
-                            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                             value={product.salePrice.licensedPrice}
                             onChange={handleChange}
                             placeholder="e.g. 35.00"
+                            disabled={!product.onSale}
                           />
                           <p className="text-xs text-gray-500 mt-1">
                             Leave empty if not on sale
@@ -1054,10 +1081,11 @@ export default function EditProductPage() {
                             type="number"
                             min="0"
                             step="0.01"
-                            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-500"
                             value={product.salePrice.unlicensedPrice}
                             onChange={handleChange}
                             placeholder="e.g. 45.00"
+                            disabled={!product.onSale}
                           />
                           <p className="text-xs text-gray-500 mt-1">
                             Leave empty if not on sale
@@ -1082,12 +1110,20 @@ export default function EditProductPage() {
                       type="checkbox"
                       className="rounded text-green-600 focus:ring-green-500 h-4 w-4"
                       checked={product.onSale}
-                      onChange={handleChange}
+                      onChange={handleOnSaleChange}
                     />
                     <label htmlFor="onSale" className="ml-2 text-sm text-gray-700">
                       Mark as On Sale
                     </label>
                   </div>
+                  
+                  {/* Add warning when turning off sale */}
+                  {!product.onSale && (product.salePrice?.licensedPrice || product.salePrice?.unlicensedPrice) && (
+                    <div className="mt-2 text-sm text-yellow-600">
+                      <FiAlertCircle className="inline-block mr-1" />
+                      Turning off sale will clear all sale prices
+                    </div>
+                  )}
                   
                   <div className="bg-yellow-50 p-4 rounded-lg mt-4">
                     <div className="flex items-start">

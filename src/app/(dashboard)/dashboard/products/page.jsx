@@ -446,9 +446,9 @@ export default function ProductsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
-                          <Link href={`/products/${product.slug}`} className="text-gray-600 hover:text-gray-900">
+                          {/* <Link href={`/products/${product.slug}`} className="text-gray-600 hover:text-gray-900">
                             <FiEye className="w-5 h-5" />
-                          </Link>
+                          </Link> */}
                           <Link href={`/dashboard/products/edit/${product._id}`} className="text-blue-600 hover:text-blue-900">
                             <FiEdit2 className="w-5 h-5" />
                           </Link>

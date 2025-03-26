@@ -57,6 +57,42 @@ export async function PUT(request, { params }) {
     
     const data = await request.json();
     
+    // Explicitly handle onSale status
+    if (data.onSale !== undefined) {
+      // If onSale is false, clear sale prices
+      if (!data.onSale) {
+        data.salePrice = {
+          licensedPrice: '',
+          unlicensedPrice: ''
+        };
+        data.discountPercentage = {
+          licensedDiscount: 0,
+          unlicensedDiscount: 0
+        };
+      }
+    }
+
+    // Calculate discount percentages if price and salePrice are provided
+    if (data.price && data.salePrice && data.onSale) {
+      if (!data.discountPercentage) {
+        data.discountPercentage = {};
+      }
+      
+      // For licensed users
+      if (data.price.licensedPrice && data.salePrice.licensedPrice) {
+        data.discountPercentage.licensedDiscount = Math.round(
+          ((data.price.licensedPrice - data.salePrice.licensedPrice) / data.price.licensedPrice) * 100
+        );
+      }
+      
+      // For unlicensed users
+      if (data.price.unlicensedPrice && data.salePrice.unlicensedPrice) {
+        data.discountPercentage.unlicensedDiscount = Math.round(
+          ((data.price.unlicensedPrice - data.salePrice.unlicensedPrice) / data.price.unlicensedPrice) * 100
+        );
+      }
+    }
+    
     // Handle publish status changes
     if (data.publishStatus) {
       // If changing to published, set the publish date if not already set
@@ -80,40 +116,6 @@ export async function PUT(request, { params }) {
       if (existingProduct) {
         return errorResponse("A product with this slug already exists", 400);
       }
-    }
-    
-    // Calculate discount percentages if price and salePrice are provided
-    if (data.price && data.salePrice) {
-      if (!data.discountPercentage) {
-        data.discountPercentage = {};
-      }
-      
-      // For licensed users
-      if (data.price.licensedPrice && data.salePrice.licensedPrice) {
-        data.discountPercentage.licensedDiscount = Math.round(
-          ((data.price.licensedPrice - data.salePrice.licensedPrice) / data.price.licensedPrice) * 100
-        );
-      }
-      
-      // For unlicensed users
-      if (data.price.unlicensedPrice && data.salePrice.unlicensedPrice) {
-        data.discountPercentage.unlicensedDiscount = Math.round(
-          ((data.price.unlicensedPrice - data.salePrice.unlicensedPrice) / data.price.unlicensedPrice) * 100
-        );
-      }
-      
-      // Set onSale flag if either price has a discount
-      data.onSale = (
-        (data.salePrice.licensedPrice && data.salePrice.licensedPrice < data.price.licensedPrice) ||
-        (data.salePrice.unlicensedPrice && data.salePrice.unlicensedPrice < data.price.unlicensedPrice)
-      );
-    } else if (data.price && !data.salePrice) {
-      // If price is updated but salePrice is removed
-      data.onSale = false;
-      data.discountPercentage = {
-        licensedDiscount: 0,
-        unlicensedDiscount: 0
-      };
     }
     
     // Update stock status if stock is updated
