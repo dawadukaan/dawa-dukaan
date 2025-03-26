@@ -6,8 +6,8 @@ import AppUpdate from "@/lib/db/models/AppUpdate";
 
 export async function GET(request) {
   // Authenticate user
-  const { authenticated, response } = await authenticateUser(request);
-  if (!authenticated) return response;
+  //const { authenticated, response } = await authenticateUser(request);
+  //if (!authenticated) return response;
 
   try {
     // Get the latest update by sorting on releaseDate

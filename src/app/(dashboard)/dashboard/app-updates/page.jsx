@@ -176,12 +176,12 @@ export default function AppUpdatesPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
-                          <Link 
+                          {/* <Link 
                             href={`/dashboard/app-updates/edit/${update._id}`} 
                             className="text-blue-600 hover:text-blue-900"
                           >
                             <FiEdit2 className="w-5 h-5" />
-                          </Link>
+                          </Link> */}
                           <button 
                             className="text-red-600 hover:text-red-900"
                             onClick={() => handleDeleteUpdate(update._id, update.version)}

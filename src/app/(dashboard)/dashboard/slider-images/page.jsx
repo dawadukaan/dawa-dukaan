@@ -36,6 +36,15 @@ const SliderFormModal = ({ show, onClose, title, initialData, onSubmit, isUpload
     onSubmit(localFormData);
   };
 
+  const handleImageChange = async (file) => {
+    if (file) {
+      const imageUrl = await onImageUpload(file);
+      if (imageUrl) {
+        setLocalFormData(prev => ({ ...prev, image: imageUrl }));
+      }
+    }
+  };
+
   if (!show) return null;
 
   return (
@@ -129,7 +138,7 @@ const SliderFormModal = ({ show, onClose, title, initialData, onSubmit, isUpload
                           onChange={(e) => {
                             const file = e.target.files[0];
                             if (file) {
-                              onImageUpload(file);
+                              handleImageChange(file);
                             }
                           }}
                           className="hidden"
@@ -289,24 +298,24 @@ export default function SliderImagesPage() {
   };
 
   const handleImageUpload = async (file) => {
-    if (!file) return;
+    if (!file) return null;
 
     // Check file size (less than 1MB)
-    const fileSize = file.size / 1024; // Convert to KB
+    const fileSize = file.size / 1024;
     if (fileSize > 1024) {
       toast.error('Image size must be less than 1MB');
-      return;
+      return null;
     }
 
     // Check image dimensions
     const img = new Image();
     img.src = URL.createObjectURL(file);
-    await new Promise((resolve) => {
+    const isValidRatio = await new Promise((resolve) => {
       img.onload = () => {
         URL.revokeObjectURL(img.src);
         const aspectRatio = img.width / img.height;
         const expectedRatio = 16 / 9;
-        const tolerance = 0.1; // 10% tolerance
+        const tolerance = 0.1;
 
         if (Math.abs(aspectRatio - expectedRatio) > tolerance) {
           toast.error('Image must have a 16:9 aspect ratio (1920×1080 recommended)');
@@ -316,6 +325,8 @@ export default function SliderImagesPage() {
         resolve(true);
       };
     });
+
+    if (!isValidRatio) return null;
 
     const formData = new FormData();
     formData.append('file', file);
@@ -330,14 +341,16 @@ export default function SliderImagesPage() {
 
       const data = await response.json();
       if (data.success) {
-        setFormData(prev => ({ ...prev, image: data.data.url }));
         toast.success('Image uploaded successfully');
+        return data.data.url; // Return the image URL
       } else {
         toast.error('Failed to upload image');
+        return null;
       }
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to upload image');
+      return null;
     } finally {
       setUploadingImage(false);
     }
@@ -434,6 +447,34 @@ export default function SliderImagesPage() {
     setShowEditModal(true);
   };
 
+  const handleToggleActive = async (slider) => {
+    const token = getCookie('token');
+    try {
+      const response = await fetch(`${env.app.apiUrl}/admin/slider-images/${slider._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...slider,
+          isActive: !slider.isActive
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Slider ${!slider.isActive ? 'activated' : 'deactivated'} successfully`);
+        fetchSliders(); // Refresh the list
+      } else {
+        toast.error(data.error || 'Operation failed');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to update slider status');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -472,13 +513,25 @@ export default function SliderImagesPage() {
                       e.target.src = 'https://via.placeholder.com/400x200?text=No+Image';
                     }}
                   />
-                  {!slider.isActive && (
-                    <div className="absolute top-2 right-2">
-                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                        Inactive
+                  <div className="absolute top-2 right-2">
+                    <button
+                      onClick={() => handleToggleActive(slider)}
+                      className={`
+                        px-3 py-1 rounded-full transition-colors duration-200 flex items-center gap-2
+                        ${slider.isActive 
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                          : 'bg-red-100 text-red-800 hover:bg-red-200'}
+                      `}
+                    >
+                      <span className={`
+                        w-2 h-2 rounded-full
+                        ${slider.isActive ? 'bg-green-500' : 'bg-red-500'}
+                      `}></span>
+                      <span className="text-xs font-medium">
+                        {slider.isActive ? 'Active' : 'Inactive'}
                       </span>
-                    </div>
-                  )}
+                    </button>
+                  </div>
                 </div>
                 <div className="p-4">
                   <h3 className="text-lg font-semibold text-gray-900">{slider.title}</h3>
