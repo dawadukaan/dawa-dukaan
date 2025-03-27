@@ -106,6 +106,16 @@ export async function GET(request) {
     const transformedProducts = products.map(product => {
       const productObj = product.toObject();
       
+      // Transform the additionalInfo Map to a regular object
+      if (productObj.additionalInfo) {
+        // Convert Mongoose Map to JavaScript object
+        productObj.additionalInfo = Object.fromEntries(
+          product.additionalInfo instanceof Map 
+            ? product.additionalInfo.entries() 
+            : Object.entries(productObj.additionalInfo || {})
+        );
+      }
+      
       // Filter price fields based on user type
       if (isLicensed) {
         // For licensee users, only include licensee prices
