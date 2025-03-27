@@ -59,6 +59,16 @@ export async function GET(request, { params }) {
     // Transform product to include pricing based on userType
     const productObj = product.toObject();
     
+    // Transform the additionalInfo Map to a regular object
+    if (productObj.additionalInfo) {
+      // Convert Mongoose Map to JavaScript object
+      productObj.additionalInfo = Object.fromEntries(
+        product.additionalInfo instanceof Map 
+          ? product.additionalInfo.entries() 
+          : Object.entries(productObj.additionalInfo || {})
+      );
+    }
+    
     // Add userPrice field based on user type
     productObj.userPrice = isLicensed 
       ? productObj.price.licensedPrice 

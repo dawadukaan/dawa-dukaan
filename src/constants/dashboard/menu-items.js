@@ -36,12 +36,12 @@ export const MENU_ITEMS = [
     icon: FiBell,
     description: 'Manage your notifications'
   },
-  // {
-  //   label: 'Slider Images',
-  //   path: '/dashboard/slider-images',
-  //   icon: FiImage,
-  //   description: 'Manage your slider images'
-  // },
+  {
+    label: 'Slider Images',
+    path: '/dashboard/slider-images',
+    icon: FiImage,
+    description: 'Manage your slider images'
+  },
   {
     label: 'Products',
     path: '/dashboard/products',
