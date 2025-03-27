@@ -148,7 +148,7 @@ export function TopNav({ onToggleSidebar }) {
             <FiMenu className="w-6 h-6" />
           </button>
           <Link href="/dashboard" className="ml-4 flex items-center">
-            <span className="text-lg font-semibold text-green-600">DavaDukaan Admin</span>
+            <span className="text-lg font-semibold text-green-600">Dawa Dukaan Admin</span>
           </Link>
         </div>
         

@@ -198,7 +198,7 @@ export default function AdminLoginPage() {
             className="rounded-full"
           />
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-white">DavaDukaan Admin Portal</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-white">Dawa Dukaan Admin Portal</h1>
         <p className="text-blue-100 text-xs sm:text-sm mt-1">Manage your medical store efficiently</p>
       </div>
 
