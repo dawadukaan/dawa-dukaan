@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "DavaDukaan",
-  titleTemplate: "%s | DavaDukaan",
-  description: "DavaDukaan is a platform for buying and selling vegetables.",
+  title: "Dawa Dukaan",
+  titleTemplate: "%s | Dawa Dukaan",
+  description: "Dawa Dukaan is a platform for buying and selling vegetables.",
 };
 
 export default function RootLayout({ children }) {

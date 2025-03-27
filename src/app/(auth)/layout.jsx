@@ -21,7 +21,7 @@ export default function AuthLayout({ children }) {
         <div className='absolute inset-0 bg-blue-900/70' />
         <div className='relative z-10 flex flex-col items-center justify-center h-full p-8'>
           <h1 className='text-white text-4xl font-bold text-center mb-4'>
-            Welcome to DavaDukaan
+            Welcome to Dawa Dukaan
           </h1>
           <p className='text-white/90 text-lg text-center'>
             Your trusted medical store for quality medicines
@@ -35,7 +35,7 @@ export default function AuthLayout({ children }) {
           {/* Mobile-only header */}
           <div className='md:hidden text-center mb-6'>
             <h1 className='text-white text-3xl font-bold mb-2'>
-              Welcome to DavaDukaan
+              Welcome to Dawa Dukaan
             </h1>
             <p className='text-white/90 text-base'>
               Your trusted medical store

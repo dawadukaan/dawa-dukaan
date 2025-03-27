@@ -15,7 +15,7 @@ export default function CloudinarySettings() {
     apiKey: '',
     apiSecret: '',
     uploadPreset: 'ml_default',
-    folder: 'davadukaan'
+    folder: 'Dawa Dukaan'
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -38,7 +38,7 @@ export default function CloudinarySettings() {
             apiKey: settings.apiKey || '',
             apiSecret: settings.apiSecret || '',
             uploadPreset: settings.uploadPreset || 'ml_default',
-            folder: settings.folder || 'davadukaan'
+            folder: settings.folder || 'Dawa Dukaan'
           });
         }
         setIsLoading(false);
@@ -50,7 +50,7 @@ export default function CloudinarySettings() {
           apiKey: '',
           apiSecret: '',
           uploadPreset: 'ml_default',
-          folder: 'davadukaan'
+          folder: 'Dawa Dukaan'
         });
         setIsLoading(false);
       }

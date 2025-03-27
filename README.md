@@ -1,8 +1,8 @@
-# DavaDukaan - Medical Store Management Portal & Mobile App
+# Dawa Dukaan - Medical Store Management Portal & Mobile App
 
 ## Project Overview
 
-DavaDukaan is a comprehensive medical store management system that includes both a web portal for administrators and a mobile application for customers. The platform streamlines the process of managing and showcasing medical products while offering different pricing tiers for licensed (medical professionals) and unlicensed (general public) users. The system includes a referral program and a call-to-buy feature, ensuring ease of purchase without requiring an integrated payment gateway.
+Dawa Dukaan is a comprehensive medical store management system that includes both a web portal for administrators and a mobile application for customers. The platform streamlines the process of managing and showcasing medical products while offering different pricing tiers for licensed (medical professionals) and unlicensed (general public) users. The system includes a referral program and a call-to-buy feature, ensuring ease of purchase without requiring an integrated payment gateway.
 
 ## Core Features
 
@@ -282,5 +282,5 @@ lib/
 - **Email**: shivam@wizzyweb.com
 - **Company**: WizzyWeb Private Limited
 
-# davadukaanproject
-# davadukaanproject
+# Dawa Dukaanproject
+# Dawa Dukaanproject

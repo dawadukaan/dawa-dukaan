@@ -192,7 +192,7 @@ export default function AdminLoginPage() {
         <div className="inline-flex items-center justify-center bg-white rounded-full p-2 shadow-lg mb-3 sm:mb-4">
           <Image
             src="https://images.unsplash.com/photo-1563213126-a4273aed2016?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-            alt="DavaDukaan Logo"
+            alt="Dawa Dukaan Logo"
             width={50}
             height={50}
             className="rounded-full"
@@ -326,7 +326,7 @@ export default function AdminLoginPage() {
           Return to main site
         </Link>
         <p className="text-xs sm:text-sm text-gray-500">
-          © {new Date().getFullYear()} DavaDukaan
+          © {new Date().getFullYear()} Dawa Dukaan
         </p>
       </div>
     </div>

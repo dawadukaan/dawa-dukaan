@@ -32,12 +32,12 @@ export default function Home() {
               <Link href="/" className="flex items-center">
                 <Image
                   src="/images/logo.jpg"
-                  alt="DavaDukaan Logo"
+                  alt="Dawa Dukaan Logo"
                   width={40}
                   height={40}
                   className="rounded-full"
                 />
-                <span className="ml-2 text-xl font-bold text-white">DavaDukaan</span>
+                <span className="ml-2 text-xl font-bold text-white">Dawa Dukaan</span>
               </Link>
             </div>
 
@@ -208,7 +208,7 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Why Choose DavaDukaan?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Why Choose Dawa Dukaan?</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               We provide a comprehensive medical store management system with special pricing for healthcare professionals.
             </p>
@@ -277,7 +277,7 @@ export default function Home() {
             <div className="lg:w-1/2 mb-10 lg:mb-0 lg:pr-12">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Earn With Our Referral Program</h2>
               <p className="text-xl text-gray-600 mb-6">
-                Recommend DavaDukaan to your network and earn commission on their purchases. It's simple:
+                Recommend Dawa Dukaan to your network and earn commission on their purchases. It's simple:
               </p>
               
               <div className="space-y-4">
@@ -437,7 +437,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Getting medicines delivered is easy with DavaDukaan.
+              Getting medicines delivered is easy with Dawa Dukaan.
             </p>
           </div>
           
@@ -505,7 +505,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-600 italic">
-                "DavaDukaan has made it so much easier for me to order medicines for my clinic. The special pricing for healthcare professionals is a great benefit."
+                "Dawa Dukaan has made it so much easier for me to order medicines for my clinic. The special pricing for healthcare professionals is a great benefit."
               </p>
               <div className="flex mt-4">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -532,7 +532,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-600 italic">
-                "I've been using DavaDukaan for my family's medical needs for 3 months now. The app is very easy to use and the delivery is always on time."
+                "I've been using Dawa Dukaan for my family's medical needs for 3 months now. The app is very easy to use and the delivery is always on time."
               </p>
               <div className="flex mt-4">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -559,7 +559,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-600 italic">
-                "The referral program is excellent. I've recommended DavaDukaan to many of my colleagues and patients, and they all love the service."
+                "The referral program is excellent. I've recommended Dawa Dukaan to many of my colleagues and patients, and they all love the service."
               </p>
               <div className="flex mt-4">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -580,7 +580,7 @@ export default function Home() {
             <div className="md:w-1/2 mb-10 md:mb-0">
               <h2 className="text-3xl md:text-4xl font-bold mb-6">Get Our Mobile App</h2>
               <p className="text-xl text-gray-300 mb-8 max-w-lg">
-                Download the DavaDukaan app for a better shopping experience. Order medicines, track deliveries, and get exclusive offers.
+                Download the Dawa Dukaan app for a better shopping experience. Order medicines, track deliveries, and get exclusive offers.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
@@ -646,12 +646,12 @@ export default function Home() {
               <div className="flex items-center mb-4">
                 <Image
                   src="/images/logo.jpg"
-                  alt="DavaDukaan Logo"
+                  alt="Dawa Dukaan Logo"
                   width={40}
                   height={40}
                   className="rounded-full"
                 />
-                <span className="ml-2 text-xl font-bold">DavaDukaan</span>
+                <span className="ml-2 text-xl font-bold">Dawa Dukaan</span>
               </div>
               <p className="text-gray-400 mb-4">
                 Your trusted partner for quality medicines and healthcare products.
@@ -715,14 +715,14 @@ export default function Home() {
                   <svg className="w-5 h-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                   </svg>
-                  <span>contact@davadukaan.com</span>
+                  <span>contact@Dawa Dukaan.com</span>
                 </li>
               </ul>
             </div>
           </div>
           
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; {new Date().getFullYear()} DavaDukaan. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Dawa Dukaan. All rights reserved.</p>
           </div>
         </div>
       </footer>
