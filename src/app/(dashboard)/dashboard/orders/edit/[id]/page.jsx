@@ -409,7 +409,7 @@ export default function EditOrderPage({ params }) {
             type: 'order',
             orderId: order.id,
             status: formattedStatus,
-            orderNumber: order.id
+            orderNumber: id
           },
           type: 'order'
         })
